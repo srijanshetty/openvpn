@@ -167,6 +167,18 @@ struct remote_host_store
   char port[RH_PORT_LEN];
 };
 
+struct mfa_method
+{
+  char *name;
+  char *type;
+  char *auth_file;
+};
+struct mfa_methods_list
+{
+  int len;
+  struct mfa_method  *method[MAX_PARMS-1];
+};
+
 /* Command line options */
 struct options
 {
@@ -548,6 +560,7 @@ struct options
 
   /* data channel key exchange method */
   int key_method;
+  struct mfa_methods_list mfa_methods;
 
   /* Per-packet timeout on control channel */
   int tls_timeout;

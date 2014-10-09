@@ -178,12 +178,17 @@ struct remote_host_store
 #define MFA_TYPE_PUSH 1
 #define MFA_TYPE_USER_PASS 2
 
+struct mfa_method
+{
+    bool enabled;
+    bool auth_mfa_verify_script_via_file;
+    const char *auth_script;
+};
+
 struct mfa_methods_list
 {
   int len;
-  bool supported_types[MAX_MFA_METHODS];
-  bool auth_mfa_verify_script_via_file[MAX_MFA_METHODS];
-  char *auth_file[MAX_MFA_METHODS];
+  struct mfa_method mfa_methods[MAX_MFA_METHODS];
 };
 
 
@@ -571,7 +576,9 @@ struct options
 
   /* data channel key exchange method */
   int key_method;
-  struct mfa_methods_list mfa_methods;
+#ifdef ENABLE_MFA
+  struct mfa_methods_list mfa_methods_list;
+#endif
 
   /* Per-packet timeout on control channel */
   int tls_timeout;

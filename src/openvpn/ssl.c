@@ -369,11 +369,11 @@ auth_mfa_setup (struct mfa_methods_list *mfa)
   auth_mfa_enabled = true;
   if (!auth_mfa.defined)
     {
-      if (mfa->supported_types[MFA_TYPE_OTP])
+      if (mfa->mfa_methods[MFA_TYPE_OTP].enabled)
         {
           get_user_pass (&auth_mfa, NULL, "second-factor", GET_USER_PASS_PASSWORD_ONLY);
         }
-      else if (mfa->supported_types[MFA_TYPE_USER_PASS])
+      else if (mfa->mfa_methods[MFA_TYPE_USER_PASS].enabled)
         {
           get_user_pass (&auth_mfa, NULL, "second-factor", 0);
         }
@@ -883,7 +883,7 @@ tls_session_user_pass_enabled(struct tls_session *session)
 static inline bool
 tls_session_mfa_enabled(struct tls_session *session)
 {
-  if (session->opt->mfa_methods.len > 0 && session->opt->server)
+  if (session->opt->mfa_methods_list.len > 0 && session->opt->server)
     return true;
   else
     return false;
@@ -1952,7 +1952,7 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
 #ifdef ENABLE_MFA
   if (auth_mfa_enabled)
     {
-      struct mfa_methods_list *m = &(session->opt->mfa_methods);
+      struct mfa_methods_list *m = &(session->opt->mfa_methods_list);
       auth_mfa_setup (m);
 
       int mfa_type = get_enabled_mfa_method(m);

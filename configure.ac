@@ -80,7 +80,7 @@ AC_ARG_ENABLE(
 
 AC_ARG_ENABLE(
 	[mfa],
-	[AS_HELP_STRING([--disable-mfa], [disable multi factor authentication @<:@default=yes@:>@])],
+	[AS_HELP_STRING([--disable-mfa], [disable multi-factor authentication @<:@default=yes@:>@])],
 	,
 	[enable_mfa="yes"]
 )

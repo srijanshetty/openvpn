@@ -965,7 +965,7 @@ verify_user_pass_script (struct tls_session *session, const struct user_pass *up
       setenv_str (session->opt->es, "script_type", "user-pass-verify");
 #ifdef ENABLE_MFA
       if ((flag == VERIFY_MFA_CREDENTIALS &&
-              session->opt->mfa_methods.auth_mfa_verify_script_via_file[session->opt->client_mfa_type]) ||
+              session->opt->mfa_methods_list.mfa_methods[session->opt->client_mfa_type].auth_mfa_verify_script_via_file) ||
               (flag == VERIFY_USER_PASS_CREDENTIALS && session->opt->auth_user_pass_verify_script_via_file))
 #else
       if (session->opt->auth_user_pass_verify_script_via_file)
@@ -1004,7 +1004,7 @@ verify_user_pass_script (struct tls_session *session, const struct user_pass *up
       /* format command line */
 #ifdef ENABLE_MFA
       if (flag == VERIFY_MFA_CREDENTIALS)
-        argv_printf (&argv, "%sc %s", session->opt->mfa_methods.auth_file[session->opt->client_mfa_type], tmp_file);
+        argv_printf (&argv, "%sc %s", session->opt->mfa_methods_list.mfa_methods[session->opt->client_mfa_type].auth_script, tmp_file);
       else if (flag == VERIFY_USER_PASS_CREDENTIALS)
         argv_printf (&argv, "%sc %s", session->opt->auth_user_pass_verify_script, tmp_file);
 #else
@@ -1014,7 +1014,6 @@ verify_user_pass_script (struct tls_session *session, const struct user_pass *up
       /* call command */
       ret = openvpn_run_script (&argv, session->opt->es, 0,
 				"--auth-user-pass-verify");
-      printf("\n\nreturn %d\n\n", ret);
       if (!session->opt->auth_user_pass_verify_script_via_file)
 	setenv_del (session->opt->es, "password");
     }
@@ -1066,7 +1065,11 @@ verify_user_pass_plugin (struct tls_session *session, const struct user_pass *up
 #endif
 
       /* call command */
+#ifdef ENABLE_MFA
       retval = plugin_call (session->opt->plugins, plugin_type, NULL, NULL, session->opt->es);
+#else
+      retval = plugin_call (session->opt->plugins, OPENVPN_PLUGIN_AUTH_USER_PASS_VERIFY, NULL, NULL, session->opt->es);
+#endif
 
 #ifdef PLUGIN_DEF_AUTH
       /* purge auth control filename (and file itself) for non-deferred returns */
@@ -1208,7 +1211,7 @@ verify_user_pass(struct user_pass *up, struct tls_multi *multi,
 
       if (plugin_defined (session->opt->plugins, plugin_type))
         s1 = verify_user_pass_plugin (session, up, raw_username, plugin_type);
-      if(session->opt->mfa_methods.auth_file[session->opt->client_mfa_type])
+      if(session->opt->mfa_methods_list.mfa_methods[session->opt->client_mfa_type].auth_script)
         s2 = verify_user_pass_script(session, up, flags);
     }
 #endif

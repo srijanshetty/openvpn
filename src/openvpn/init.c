@@ -427,10 +427,9 @@ init_query_passwords (struct context *c)
 #endif
     }
 #ifdef ENABLE_MFA
-  if (c->options.mfa_methods.len > 0 && c->options.tls_client)
+  if (c->options.mfa_methods_list.len > 0 && c->options.tls_client)
     {
-      /* we are assuming only one active mfa method*/
-      auth_mfa_setup (&(c->options.mfa_methods));
+      auth_mfa_setup (&(c->options.mfa_methods_list));
     }
 #endif
 #endif
@@ -2178,7 +2177,6 @@ do_init_crypto_tls (struct context *c, const unsigned int flags)
   to.key_type = c->c1.ks.key_type;
   to.server = options->tls_server;
   to.key_method = options->key_method;
-  to.mfa_methods = options->mfa_methods;
   to.replay = options->replay;
   to.replay_window = options->replay_window;
   to.replay_time = options->replay_time;
@@ -2190,6 +2188,9 @@ do_init_crypto_tls (struct context *c, const unsigned int flags)
   to.renegotiate_packets = options->renegotiate_packets;
   to.renegotiate_seconds = options->renegotiate_seconds;
   to.single_session = options->single_session;
+#ifdef ENABLE_MFA
+  to.mfa_methods_list = options->mfa_methods_list;
+#endif
 #ifdef ENABLE_PUSH_PEER_INFO
   if (options->push_peer_info)		/* all there is */
     to.push_peer_info_detail = 2;

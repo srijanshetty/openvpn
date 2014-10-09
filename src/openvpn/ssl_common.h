@@ -228,7 +228,7 @@ struct tls_options
   /* from command line */
   int key_method;
 #ifdef ENABLE_MFA
-  struct mfa_methods_list mfa_methods;
+  struct mfa_methods_list mfa_methods_list;
   int client_mfa_type;
 #endif
   bool replay;

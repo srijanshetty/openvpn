@@ -230,6 +230,7 @@ struct tls_options
 #ifdef ENABLE_MFA
   struct mfa_methods_list mfa_methods_list;
   int client_mfa_type;
+  bool mfa_backward_compat;
 #endif
   bool replay;
   bool single_session;

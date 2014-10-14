@@ -2124,8 +2124,10 @@ options_postprocess_verify_ce (const struct options *options, const struct conne
       if (compat_flag (COMPAT_FLAG_QUERY | COMPAT_NO_NAME_REMAPPING))
         msg (M_USAGE, "--compat-x509-names no-remapping requires --mode server");
 #ifdef ENABLE_MFA
-      if(options->mfa_methods_list.len > 1)
+      if (options->mfa_methods_list.len > 1)
         msg(M_USAGE, "--mfa-method cannot be used more than once with --mode client");
+      if (options->mfa_backward_compat)
+        msg(M_USAGE, "--mfa-backward-compat cannot be used with --mode client");
 #endif
     }
 #endif /* P2MP_SERVER */
@@ -6986,7 +6988,11 @@ add_option (struct options *options,
         {
           msg(msglevel, "Missing arguments for --mfa-method option");
         }
-      }
+    }
+  else if (streq (p[0], "mfa-backward-compat"))
+    {
+      options->mfa_backward_compat = true;
+    }
 #endif
 #ifdef ENABLE_X509ALTUSERNAME
   else if (streq (p[0], "x509-username-field") && p[1])

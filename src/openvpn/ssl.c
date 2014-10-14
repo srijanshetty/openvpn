@@ -352,9 +352,9 @@ pem_password_callback (char *buf, int size, int rwflag, void *u)
  */
 
 static bool auth_user_pass_enabled;     /* GLOBAL */
-static bool auth_mfa_enabled;           /* GLOBAL */
 static struct user_pass auth_user_pass; /* GLOBAL */
 #ifdef ENABLE_MFA
+static bool auth_mfa_enabled;           /* GLOBAL */
 static struct user_pass auth_mfa;       /* GLOBAL */
 #endif
 
@@ -1922,7 +1922,12 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
     goto error;
 
   /* write key_method + flags */
-  if (!buf_write_u8 (buf, (session->opt->key_method & KEY_METHOD_MASK)))
+  if (!buf_write_u8 (buf, ((session->opt->key_method & KEY_METHOD_MASK)
+#ifdef ENABLE_MFA
+          | KEY_METHOD_MFA_ENABLED
+#endif
+          )))
+
     goto error;
 
   /* write key source material */
@@ -1957,8 +1962,11 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
 	goto error;
     }
 
+  if (!push_peer_info (buf, session))
+    goto error;
+
 #ifdef ENABLE_MFA
-  if (auth_mfa_enabled)
+  if (auth_mfa_enabled) /* client only */
     {
       struct mfa_methods_list *m = &(session->opt->mfa_methods_list);
       auth_mfa_setup (m);
@@ -2001,8 +2009,6 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
 	goto error;
     }
 #endif
-  if (!push_peer_info (buf, session))
-    goto error;
 
   /*
    * generate tunnel keys if server
@@ -2102,6 +2108,7 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
   int key_method_flags;
   bool username_status, password_status;
 #ifdef ENABLE_MFA
+  bool peer_supports_mfa;
   bool mfa_username_status, mfa_password_status, mfa_type_status;
   int mfa_type;
   struct user_pass *mfa;
@@ -2133,6 +2140,20 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
       goto error;
     }
 
+#ifdef ENABLE_MFA
+  if (key_method_flags & KEY_METHOD_MFA_ENABLED)
+    peer_supports_mfa = true;
+  else
+    {
+      peer_supports_mfa = false;
+      if (tls_session_mfa_enabled(session) && !session->opt->mfa_backward_compat)
+        {
+          msg (D_TLS_ERRORS, "Client does not support multi-factor authentication");
+          goto error;
+        }
+    }
+#endif
+
   /* get key source material (not actual keys yet) */
   if (!key_source2_read (ks->key_src, buf, session->opt->server))
     {
@@ -2157,25 +2178,28 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
   username_status = read_string (buf, up->username, USER_PASS_LEN);
   password_status = read_string (buf, up->password, USER_PASS_LEN);
 
-#ifdef ENABLE_MFA
-  /* get mfa method */
-  mfa_type = (int) buf_read_u32 (buf, &mfa_type_status);
-  if (!mfa_type_status)
-    {
-      msg(D_TLS_ERRORS, "Bad MFA-type received");
-      goto error;
-    }
-  ALLOC_OBJ_CLEAR_GC (mfa, struct user_pass, &gc);
-  mfa_username_status = read_string (buf, mfa->username, USER_PASS_LEN);
-  mfa_password_status = read_string (buf, mfa->password, USER_PASS_LEN);
-#endif
-
 #if P2MP_SERVER
   /* get peer info from control channel */
   free (multi->peer_info);
   multi->peer_info = read_string_alloc (buf);
   if ( multi->peer_info )
       output_peer_info_env (session->opt->es, multi->peer_info);
+#endif
+
+#ifdef ENABLE_MFA
+  if (peer_supports_mfa)
+    {
+      /* get mfa method */
+      mfa_type = (int) buf_read_u32 (buf, &mfa_type_status);
+      if (!mfa_type_status)
+        {
+          msg(D_TLS_ERRORS, "Bad MFA-type received");
+          goto error;
+        }
+      ALLOC_OBJ_CLEAR_GC (mfa, struct user_pass, &gc);
+      mfa_username_status = read_string (buf, mfa->username, USER_PASS_LEN);
+      mfa_password_status = read_string (buf, mfa->password, USER_PASS_LEN);
+    }
 #endif
 
   if (tls_session_user_pass_enabled(session))
@@ -2216,7 +2240,7 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
 
 #ifdef ENABLE_MFA
   /*check for MFA options */
-  if (tls_session_mfa_enabled(session))
+  if (tls_session_mfa_enabled(session) && peer_supports_mfa)
     {
       if (!process_mfa_options (mfa_type, session))
         {
@@ -2229,20 +2253,19 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
              * set username to common name in case of OTP and PUSH
              */
             if (session->opt->client_mfa_type == MFA_TYPE_OTP
-                  || session->opt->client_mfa_type == MFA_TYPE_PUSH)
+                || session->opt->client_mfa_type == MFA_TYPE_PUSH)
               {
                 strncpynt(mfa->username, session->common_name, TLS_USERNAME_LEN);
               }
             verify_user_pass(mfa, multi, session, VERIFY_MFA_CREDENTIALS);
         }
-
+      CLEAR (*mfa);
     }
   else
     {
       ks->authenticated = true;
     }
 
-  CLEAR (*mfa);
 #endif
 
   /* Perform final authentication checks */

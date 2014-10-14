@@ -124,6 +124,9 @@
 
 /* key method taken from lower 4 bits */
 #define KEY_METHOD_MASK 0x0F
+#ifdef ENABLE_MFA
+#define KEY_METHOD_MFA_ENABLED 0x10
+#endif
 
 /*
  * Measure success rate of TLS handshakes, for debugging only

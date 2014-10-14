@@ -3228,7 +3228,7 @@ options_cmp_equal_safe (char *actual, const char *expected, size_t actual_n)
 bool
 process_mfa_options (int client_mfa_type, struct tls_session *session)
 {
-  if (!(client_mfa_type >= 0 && client_mfa_type < MAX_MFA_METHODS))
+  if (!(client_mfa_type >= 0 && client_mfa_type < MFA_TYPE_N))
     return false;
   if (session->opt->mfa_methods_list.mfa_methods[client_mfa_type].enabled)
     {
@@ -3246,7 +3246,7 @@ int
 get_enabled_mfa_method (struct mfa_methods_list *m)
 {
   int i;
-  for (i = 0; i < MAX_MFA_METHODS; i++)
+  for (i = 0; i < MFA_TYPE_N; i++)
     {
       if (m->mfa_methods[i].enabled)
         return i;
@@ -6935,9 +6935,9 @@ add_option (struct options *options,
 #ifdef ENABLE_MFA
   else if (streq (p[0], "mfa-method"))
     {
-      if(options->mfa_methods_list.len >= MAX_MFA_METHODS)
+      if(options->mfa_methods_list.len >= MFA_TYPE_N)
         {
-          msg(msglevel, "Maximum number of mfa-method allowed is %d", MAX_MFA_METHODS);
+          msg(msglevel, "Maximum number of mfa-method allowed is %d", MFA_TYPE_N);
           goto err;
         }
 

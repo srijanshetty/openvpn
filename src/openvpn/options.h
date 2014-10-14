@@ -168,15 +168,11 @@ struct remote_host_store
 };
 
 #ifdef ENABLE_MFA
-/*
- * Maximum number of MFA options that can be specified
- */
-#define MAX_MFA_METHODS 3
-
 
 #define MFA_TYPE_OTP 0
 #define MFA_TYPE_PUSH 1
 #define MFA_TYPE_USER_PASS 2
+#define MFA_TYPE_N 3
 
 struct mfa_method
 {
@@ -188,7 +184,7 @@ struct mfa_method
 struct mfa_methods_list
 {
   int len;
-  struct mfa_method mfa_methods[MAX_MFA_METHODS];
+  struct mfa_method mfa_methods[MFA_TYPE_N];
 };
 
 

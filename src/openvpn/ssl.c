@@ -1993,7 +1993,7 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
     }
   else
     {
-      if (!write_empty_string (buf)) /* no mfa-method string */
+      if (!buf_write_u32 (buf, MFA_TYPE_N)) /* mfa disabled */
 	goto error;
       if (!write_empty_string (buf)) /* no username */
 	goto error;
@@ -2232,7 +2232,7 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
     {
       if (!process_mfa_options (mfa_type, session))
         {
-          msg(D_TLS_ERRORS, "Invalid multi-factor-authentication type");
+          msg(D_TLS_ERRORS, "TLS Error: Client did not provide MFA credentials");
           ks->authenticated = false;
         }
       else

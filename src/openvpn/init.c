@@ -2190,6 +2190,7 @@ do_init_crypto_tls (struct context *c, const unsigned int flags)
   to.single_session = options->single_session;
 #ifdef ENABLE_MFA
   to.mfa_methods_list = options->mfa_methods_list;
+  to.mfa_backward_compat = options->mfa_backward_compat;
 #endif
 #ifdef ENABLE_PUSH_PEER_INFO
   if (options->push_peer_info)		/* all there is */
@@ -2512,6 +2513,12 @@ do_option_warnings (struct context *c)
       && !o->remote_cert_eku)
     msg (M_WARN, "WARNING: No server certificate verification method has been enabled.  See http://openvpn.net/howto.html#mitm for more info.");
 #endif
+#endif
+
+#ifdef ENABLE_MFA
+  if (o->tls_server
+      && o->mfa_backward_compat)
+    msg (M_WARN, "WARNING: using --mfa-backward-compat allows clients to bypass multi-factor authentication.");
 #endif
 
 #ifndef CONNECT_NONBLOCK

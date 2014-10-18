@@ -2237,22 +2237,23 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
         }
       else
         {
-            /*
-             * set username to common name in case of OTP and PUSH
-             */
-            if (session->opt->client_mfa_type == MFA_TYPE_OTP
-                || session->opt->client_mfa_type == MFA_TYPE_PUSH)
-              {
-                strncpynt(mfa->username, session->common_name, TLS_USERNAME_LEN);
-              }
-            verify_user_pass(mfa, multi, session, VERIFY_MFA_CREDENTIALS);
+          /*
+           * set username to common name in case of OTP and PUSH
+           */
+          if (session->opt->client_mfa_type == MFA_TYPE_OTP
+              || session->opt->client_mfa_type == MFA_TYPE_PUSH)
+            {
+              strncpynt(mfa->username, session->common_name, USER_PASS_LEN);
+            }
+          verify_user_pass(mfa, multi, session, VERIFY_MFA_CREDENTIALS);
         }
-      CLEAR (*mfa);
     }
   else
     {
       ks->authenticated = true;
     }
+  if (mfa)
+    CLEAR (*mfa);
 
 #endif
 

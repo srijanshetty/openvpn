@@ -176,9 +176,9 @@ struct remote_host_store
 
 struct mfa_method
 {
-    bool enabled;
-    bool auth_mfa_verify_script_via_file;
-    const char *auth_script;
+  bool enabled;
+  bool auth_mfa_verify_script_via_file;
+  const char *auth_script;
 };
 
 struct mfa_methods_list

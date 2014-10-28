@@ -63,6 +63,8 @@
 
 #include "memdbg.h"
 
+#include "mfa_session.h"
+
 #ifndef ENABLE_OCC
 static const char ssl_default_options_string[] = "V0 UNDEF";
 #endif

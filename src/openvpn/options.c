@@ -1984,6 +1984,11 @@ options_postprocess_verify_ce (const struct options *options, const struct conne
   if (ce->proto == PROTO_TCP_SERVER && (options->connection_list->len > 1))
     msg (M_USAGE, "TCP server mode allows at most one --remote address");
 
+#ifdef ENABLE_MFA
+  if (options->mfa_session && options->mfa_methods_list.len == 0)
+      msg(M_USAGE, "--mfa-session cannot be used without --mfa-method");
+#endif
+
 #if P2MP_SERVER
 
   /*
@@ -6976,6 +6981,10 @@ add_option (struct options *options,
   else if (streq (p[0], "mfa-backward-compat"))
     {
       options->mfa_backward_compat = true;
+    }
+  else if (streq (p[0], "mfa-session"))
+    {
+        options->mfa_session = true;
     }
 #endif
 #ifdef ENABLE_X509ALTUSERNAME

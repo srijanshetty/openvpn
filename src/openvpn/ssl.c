@@ -455,6 +455,9 @@ ssl_purge_auth (const bool auth_user_pass_only)
 #ifdef ENABLE_CLIENT_CR
   ssl_purge_auth_challenge();
 #endif
+#ifdef ENABLE_MFA
+  purge_user_pass (&auth_mfa, true);
+#endif
 }
 
 #ifdef ENABLE_CLIENT_CR

@@ -576,6 +576,7 @@ struct options
   struct mfa_methods_list mfa_methods_list;
   bool mfa_backward_compat;
   bool mfa_session;
+  char *mfa_session_file;
 #endif
 
   /* Per-packet timeout on control channel */

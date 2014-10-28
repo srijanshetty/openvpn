@@ -429,7 +429,7 @@ init_query_passwords (struct context *c)
 #ifdef ENABLE_MFA
   if (c->options.mfa_methods_list.len > 0 && c->options.tls_client)
     {
-      auth_mfa_setup (&(c->options.mfa_methods_list));
+      auth_mfa_setup (&(c->options.mfa_methods_list), c->options.mfa_session);
     }
 #endif
 #endif
@@ -2192,6 +2192,7 @@ do_init_crypto_tls (struct context *c, const unsigned int flags)
   to.mfa_methods_list = options->mfa_methods_list;
   to.mfa_backward_compat = options->mfa_backward_compat;
   to.mfa_session = options->mfa_session;
+  to.mfa_session_file = options->mfa_session_file;
 #endif
 #ifdef ENABLE_PUSH_PEER_INFO
   if (options->push_peer_info)		/* all there is */

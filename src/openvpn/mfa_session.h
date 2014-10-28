@@ -32,8 +32,9 @@
 #ifdef ENABLE_MFA
 struct mfa_session_info
 {
-  char *cname;
-  // uint8_t session_id[
+  char *cn;
+  uint8_t session_id[32];
+  unsigned char *fingerprint;
 };
 #endif
 

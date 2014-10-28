@@ -358,6 +358,7 @@ static struct user_pass auth_user_pass; /* GLOBAL */
 #ifdef ENABLE_MFA
 static bool auth_mfa_enabled;           /* GLOBAL */
 static struct user_pass auth_mfa;       /* GLOBAL */
+static bool mfa_session_token_sent = false;         /* GLOBAL */
 #endif
 
 #ifdef ENABLE_CLIENT_CR
@@ -366,10 +367,11 @@ static char *auth_challenge; /* GLOBAL */
 
 #ifdef ENABLE_MFA
 void
-auth_mfa_setup (struct mfa_methods_list *mfa)
+auth_mfa_setup (struct mfa_methods_list *mfa, bool mfa_session)
 {
+
   auth_mfa_enabled = true;
-  if (!auth_mfa.defined)
+  if (!auth_mfa.defined && (!mfa_session || mfa_session_token_sent))
     {
       if (mfa->mfa_methods[MFA_TYPE_OTP].enabled)
         {
@@ -1971,7 +1973,7 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
   if (auth_mfa_enabled) /* client only */
     {
       struct mfa_methods_list *m = &(session->opt->mfa_methods_list);
-      auth_mfa_setup (m);
+      auth_mfa_setup (m, session->opt->mfa_session);
 
       int mfa_type = get_enabled_mfa_method(m);
       if (mfa_type == -1)

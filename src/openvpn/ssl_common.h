@@ -231,6 +231,7 @@ struct tls_options
   struct mfa_methods_list mfa_methods_list;
   int client_mfa_type;
   bool mfa_backward_compat;
+  bool mfa_session;
 #endif
   bool replay;
   bool single_session;

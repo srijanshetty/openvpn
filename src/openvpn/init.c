@@ -2201,6 +2201,7 @@ do_init_crypto_tls (struct context *c, const unsigned int flags)
 #ifdef ENABLE_MFA
   to.mfa_methods_list = options->mfa_methods_list;
   to.mfa_backward_compat = options->mfa_backward_compat;
+  to.mfa_session = options->mfa_session;
 #endif
 #ifdef ENABLE_PUSH_PEER_INFO
   if (options->push_peer_info)		/* all there is */

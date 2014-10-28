@@ -70,6 +70,7 @@ openvpn_SOURCES = \
 	misc.c misc.h \
 	platform.c platform.h \
 	console.c console.h \
+	mfa_session.c mfa_session.h \
 	mroute.c mroute.h \
 	mss.c mss.h \
 	mstats.c mstats.h \

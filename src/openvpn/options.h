@@ -578,6 +578,7 @@ struct options
   bool mfa_backward_compat;
   bool mfa_session;
   char *mfa_session_file;
+  int mfa_session_expire;
 #endif
 
   /* Per-packet timeout on control channel */

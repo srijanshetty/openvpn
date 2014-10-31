@@ -6991,7 +6991,16 @@ add_option (struct options *options,
           }
         else
           {
-            options->mfa_session_file = "mfa_session";
+            msg(msglevel, "--mfa-session requires a second parameter - a file to store session tokens");
+            goto err;
+          }
+        if(p[3])
+          {
+            options->mfa_session_expire = positive_atoi(p[3])
+          }
+        else
+          {
+            options->mfa_session_expire = 240
           }
     }
 #endif

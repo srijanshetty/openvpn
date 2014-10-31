@@ -34,6 +34,7 @@
 #ifdef ENABLE_MFA
 #define MAX_MFA_SESSIONS 128
 #define MFA_TOKEN_LENGTH 65
+#define MFA_COOKIE_IV_LENGTH 128
 struct mfa_session_info
 {
   char *cn;

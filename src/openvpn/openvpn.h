@@ -47,6 +47,7 @@
 #include "plugin.h"
 #include "manage.h"
 #include "pf.h"
+#include "mfa_session.h"
 
 /*
  * Our global key schedules, packaged thusly
@@ -213,6 +214,9 @@ struct context_1
   struct user_pass *auth_user_pass;
                                 /**< Username and password for
                                  *   authentication. */
+#ifdef ENABLE_MFA
+  uint8_t cookieIV[MFA_COOKIE_IV_LENGTH];
+#endif
 #endif
 };
 

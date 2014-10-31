@@ -1913,7 +1913,7 @@ push_peer_info(struct buffer *buf, struct tls_session *session)
 }
 
 /* Writes MFA credentials in key method 2 packet */
-bool write_mfa_credentials (struct buffer *buf, struct tls_session *session)
+bool write_mfa_credentials (struct tls_session *session, struct buffer *buf)
 {
   struct mfa_methods_list *m = &(session->opt->mfa_methods_list);
   int mfa_type = get_enabled_mfa_method(m);
@@ -1954,8 +1954,8 @@ bool write_mfa_credentials (struct buffer *buf, struct tls_session *session)
 /* Writes MFA session cookie in key method 2 packet
  * and empty strings for MFA credentials.
  */
-bool write_mfa_cookie (struct buffer *buf,
-                       struct tls_session *session,
+bool write_mfa_cookie (struct tls_session *session,
+                       struct buffer *buf,
                        struct mfa_session_info *cookie)
 {
   if (!buf_write_u32 (buf, MFA_TYPE_COOKIE))
@@ -2034,7 +2034,7 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
     {
       if (session->opt->mfa_session && !mfa_session_token_sent) /* don't send cookie on retry */
         {
-          struct mfa_session_info *cookie = get_cookie (ks->remote_addr.dest);
+          struct mfa_session_info *cookie = get_cookie (&(ks->remote_addr.dest), session->opt->cookie_store);
           if (!cookie)
             {
               if (!write_mfa_credentials(session, buf))

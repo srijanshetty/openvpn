@@ -7003,11 +7003,11 @@ add_option (struct options *options,
         options->mfa_session = true;
         if(p[2])
           {
-            options->mfa_session_file = p[2]
+            options->mfa_session_file = p[2];
           }
         else
           {
-            option->mfa_session_file = "mfa_session"
+            options->mfa_session_file = "mfa_session";
           }
     }
 #endif

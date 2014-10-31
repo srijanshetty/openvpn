@@ -172,7 +172,7 @@ struct remote_host_store
 #define MFA_TYPE_OTP 0
 #define MFA_TYPE_PUSH 1
 #define MFA_TYPE_USER_PASS 2
-#define MFA_TYPE_SESSION 3
+#define MFA_TYPE_COOKIE 3
 #define MFA_TYPE_N 4
 
 struct mfa_method

@@ -34,16 +34,16 @@
 #include "socket.h"
 
 #ifdef ENABLE_MFA
-struct mfa_session_info * get_cookie (const openvpn_sockaddr *dest, struct mfa_session_store *store)
+struct mfa_session_info * get_cookie (const struct openvpn_sockaddr *dest, struct mfa_session_store *store)
 {
   struct gc_arena gc = gc_new();
   int i;
-  char *addr = print_openvpn_sockaddr(dest, &gc);
+  const char *addr = print_openvpn_sockaddr(dest, &gc);
   if (!addr)
     return NULL;
   for (i = 0; i < store->len; i++)
     {
-      if (streq(addr, store->mfa_session_info[i]->remote_address))
+      if (!strcmp(addr, store->mfa_session_info[i]->remote_address))
         {
           break;
         }

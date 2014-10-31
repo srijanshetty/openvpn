@@ -233,6 +233,7 @@ struct tls_options
   bool mfa_backward_compat;
   bool mfa_session;
   char *mfa_session_file;
+  struct mfa_session_store *cookie_store;
 #endif
   bool replay;
   bool single_session;

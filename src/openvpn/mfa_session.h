@@ -35,11 +35,13 @@
 #define MAX_MFA_SESSIONS 128
 #define MFA_TOKEN_LENGTH 65
 #define MFA_COOKIE_IV_LENGTH 128
+#define MFA_TIMESTAMP_LENGTH 20
 struct mfa_session_info
 {
   char *cn;
   char *token;
   unsigned char *remote_address;
+  unsigned long long timestamp;
 };
 
 struct mfa_session_store

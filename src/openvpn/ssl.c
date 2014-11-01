@@ -2219,8 +2219,8 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
   ALLOC_OBJ_CLEAR_GC (up, struct user_pass, &gc);
   username_status = read_string (buf, up->username, USER_PASS_LEN);
   password_status = read_string (buf, up->password, USER_PASS_LEN);
-  mfa_cookie_token_status = read_string (buf, cookie->token, MFA_TOKEN_LENGTH);
-  mfa_cookie_timestamp_status = read_string(buf, cookie->timestamp, MFA_TIMESTAMP_LENGTH);
+  mfa_cookie_status = read_string (buf, cookie.token, MFA_TOKEN_LENGTH);
+  mfa_cookie_timestamp_status = read_string(buf, cookie.timestamp, MFA_TIMESTAMP_LENGTH);
 #if P2MP_SERVER
   /* get peer info from control channel */
   free (multi->peer_info);

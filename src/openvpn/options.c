@@ -6996,11 +6996,11 @@ add_option (struct options *options,
           }
         if(p[3])
           {
-            options->mfa_session_expire = positive_atoi(p[3])
+            options->mfa_session_expire = positive_atoi(p[3]);
           }
         else
           {
-            options->mfa_session_expire = 240
+            options->mfa_session_expire = 240;
           }
     }
 #endif

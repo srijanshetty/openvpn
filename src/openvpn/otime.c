@@ -78,6 +78,25 @@ update_now_usec (struct timeval *tv)
 
 #endif /* TIME_BACKTRACK_PROTECTION */
 
+/* Parse a timestamp string and check for errors */
+bool parse_time_string(const char *time_string, struct timeval *t)
+{
+  char *endptr;
+  bool ret = true;
+  errno = 0;
+  unsigned long long timestamp = strtoull(time_string, &endptr, 0);
+
+  // A timestamp cannot be 0 or ULLLONG_MAX
+  if (endptr == time_string || *endptr != '\0' ||
+     ((timestamp == 0 || timestamp == ULLONG_MAX) && errno == ERANGE))
+     ret = false;
+
+  t->tv_sec = timestamp;
+  t->tv_usec = 0;
+
+  return ret;
+}
+
 /* 
  * Return a numerical string describing a struct timeval.
  */

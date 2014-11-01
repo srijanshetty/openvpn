@@ -44,6 +44,9 @@ bool frequency_limit_event_allowed (struct frequency_limit *f);
 /* format a time_t as ascii, or use current time if 0 */
 const char* time_string (time_t t, int usec, bool show_usec, struct gc_arena *gc);
 
+/* read a timeval formatted as ascii */
+bool parse_time_string(const char *time_string, struct timeval *t);
+
 /* struct timeval functions */
 
 const char *tv_string (const struct timeval *tv, struct gc_arena *gc);

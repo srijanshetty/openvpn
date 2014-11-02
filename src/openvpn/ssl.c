@@ -1944,6 +1944,8 @@ bool write_mfa_credentials (struct tls_session *session, struct buffer *buf)
       return false;
   }
 
+  if (!write_empty_string (buf)) /* no timestamp */
+    return false;
   if (!write_empty_string (buf)) /* no cookie */
     return false;
 
@@ -1966,6 +1968,8 @@ bool write_mfa_cookie (struct tls_session *session,
   if (!write_empty_string (buf)) /* no password */
     return false;
 
+  if (!write_string (buf, cookie->timestamp, MFA_TIMESTAMP_LENGTH))
+    return false;
   if (!write_string (buf, cookie->token, MFA_TOKEN_LENGTH))
     return false;
 
@@ -2034,7 +2038,7 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
     {
       if (session->opt->mfa_session && !mfa_session_token_sent) /* don't send cookie on retry */
         {
-          struct mfa_session_info *cookie = get_cookie (&(ks->remote_addr.dest), session->opt->cookie_store);
+          struct mfa_session_info *cookie = get_cookie (&(ks->remote_addr.dest), session->opt->cookie_jar);
           if (!cookie)
             {
               if (!write_mfa_credentials(session, buf))
@@ -2057,8 +2061,12 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
       if (!buf_write_u32 (buf, MFA_TYPE_N)) /* mfa disabled */
 	goto error;
       if (!write_empty_string (buf)) /* no username */
-	goto error;
+        goto error;
       if (!write_empty_string (buf)) /* no password */
+	goto error;
+      if (!write_empty_string (buf)) /* no timestamp */
+	goto error;
+      if (!write_empty_string (buf)) /* no session token */
 	goto error;
     }
 #endif
@@ -2162,7 +2170,8 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
   bool username_status, password_status;
 #ifdef ENABLE_MFA
   bool peer_supports_mfa;
-  bool mfa_username_status, mfa_password_status, mfa_type_status, mfa_cookie_status, mfa_cookie_timestamp_status;
+  bool mfa_username_status, mfa_password_status, mfa_type_status;
+  bool mfa_token_status, mfa_cookie_timestamp_status;
   int mfa_type;
   struct user_pass *mfa;
   struct mfa_session_info cookie;
@@ -2231,8 +2240,6 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
   ALLOC_OBJ_CLEAR_GC (up, struct user_pass, &gc);
   username_status = read_string (buf, up->username, USER_PASS_LEN);
   password_status = read_string (buf, up->password, USER_PASS_LEN);
-  mfa_cookie_status = read_string (buf, cookie.token, MFA_TOKEN_LENGTH);
-  mfa_cookie_timestamp_status = read_string(buf, cookie.timestamp, MFA_TIMESTAMP_LENGTH);
 #if P2MP_SERVER
   /* get peer info from control channel */
   free (multi->peer_info);
@@ -2254,6 +2261,8 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
       ALLOC_OBJ_CLEAR_GC (mfa, struct user_pass, &gc);
       mfa_username_status = read_string (buf, mfa->username, USER_PASS_LEN);
       mfa_password_status = read_string (buf, mfa->password, USER_PASS_LEN);
+      mfa_cookie_timestamp_status = read_string (buf, cookie.timestamp, MFA_TIMESTAMP_LENGTH);
+      mfa_token_status = read_string (buf, cookie.token, MFA_TOKEN_LENGTH);
     }
 #endif
 
@@ -2304,6 +2313,20 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
         }
       else
         {
+          if (session->opt->client_mfa_type == MFA_TYPE_COOKIE)
+          {
+            if (!mfa_token_status || !mfa_cookie_timestamp_status)
+              {
+                msg(D_TLS_ERRORS, "TLS Error: Client did not provide session cookie");
+                ks->authenticated = false;
+              }
+            else if (session->mfa_session)
+              verify_mfa_cookie (session, cookie);
+            else
+              ks->authenticated = false;
+          }
+          else /* client used one of the MFA auth methods */
+            {
           /*
            * set username to common name in case of OTP and PUSH
            */
@@ -2313,6 +2336,7 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
               strncpynt(mfa->username, session->common_name, USER_PASS_LEN);
             }
           verify_user_pass(mfa, multi, session, VERIFY_MFA_CREDENTIALS);
+            }
         }
     }
   else

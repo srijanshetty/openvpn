@@ -2065,6 +2065,10 @@ options_postprocess_verify_ce (const struct options *options, const struct conne
 	msg (M_USAGE, "--ccd-exclusive must be used with --client-config-dir");
       if (options->key_method != 2)
 	msg (M_USAGE, "--mode server requires --key-method 2");
+#ifdef ENABLE_MFA
+      if (options->mfa_session_file)
+	msg (M_USAGE, "-mfa-session-file cannot be used with --mode server");
+#endif
 
 	{
 	  const bool ccnr = (options->auth_user_pass_verify_script
@@ -2078,6 +2082,7 @@ options_postprocess_verify_ce (const struct options *options, const struct conne
 	  if ((options->ssl_flags & SSLF_AUTH_USER_PASS_OPTIONAL) && !ccnr)
 	    msg (M_USAGE, "--auth-user-pass-optional %s", postfix);
 	}
+
     }
   else
     {
@@ -2129,9 +2134,11 @@ options_postprocess_verify_ce (const struct options *options, const struct conne
         msg (M_USAGE, "--compat-x509-names no-remapping requires --mode server");
 #ifdef ENABLE_MFA
       if (options->mfa_methods_list.len > 1)
-        msg(M_USAGE, "--mfa-method cannot be used more than once with --mode client");
+	msg (M_USAGE, "--mfa-method cannot be used more than once with --mode client");
       if (options->mfa_backward_compat)
-        msg(M_USAGE, "--mfa-backward-compat cannot be used with --mode client");
+	msg (M_USAGE, "--mfa-backward-compat cannot be used with --mode client");
+      if (options->mfa_session_expire)
+	msg (M_USAGE, "--mfa-session-expiration cannot be used with --mode client");
 #endif
     }
 #endif /* P2MP_SERVER */
@@ -6987,27 +6994,32 @@ add_option (struct options *options,
     {
       options->mfa_backward_compat = true;
     }
-  else if (streq (p[0], "mfa-session"))
+  else if(strreq (p[0], "mfa-session-file"))
     {
         options->mfa_session = true;
-        if(p[2])
+        if(p[1])
           {
-            options->mfa_session_file = p[2];
+            options->mfa_session_file = p[1];
           }
         else
           {
-            msg(msglevel, "--mfa-session requires a second parameter - a file to store session tokens");
+            msg(msglevel, "--mfa-session-file requires the name of the file to store session tokens");
             goto err;
           }
-        if(p[3])
+    }
+  else if(streq(p[0], "mfa-session-expiration"))
+    {
+        options->mfa_session = true;
+        if(p[1])
           {
-            options->mfa_session_expire = positive_atoi(p[3]);
+            options->mfa_session_expire = positive_atoi(p[1]);
           }
         else
           {
-            options->mfa_session_expire = 240;
+            msg(msglevel, "--mfa-session-expiry requires an expiration time for cookies");
+            goto err;
           }
-    }
+  }
 #endif
 #ifdef ENABLE_X509ALTUSERNAME
   else if (streq (p[0], "x509-username-field") && p[1])

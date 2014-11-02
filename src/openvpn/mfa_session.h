@@ -41,7 +41,7 @@ struct mfa_session_info
   char *cn;
   char *token;
   unsigned char *remote_address;
-  unsigned long long timestamp;
+  char *timestamp;
 };
 
 struct mfa_session_store

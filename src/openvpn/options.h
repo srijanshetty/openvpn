@@ -172,8 +172,10 @@ struct remote_host_store
 #define MFA_TYPE_OTP 0
 #define MFA_TYPE_PUSH 1
 #define MFA_TYPE_USER_PASS 2
-#define MFA_TYPE_COOKIE 3
-#define MFA_TYPE_N 4
+ /* Number of MFA methods. Also sent as MFA type when MFA is disabled */
+#define MFA_TYPE_N 3
+
+#define MFA_TYPE_COOKIE 4
 
 struct mfa_method
 {

@@ -3234,6 +3234,12 @@ options_cmp_equal_safe (char *actual, const char *expected, size_t actual_n)
 bool
 process_mfa_options (int client_mfa_type, struct tls_session *session)
 {
+  /* Type cookie is special. It doesn't exist in mfa_methods_list. */
+  if (client_mfa_type == MFA_TYPE_COOKIE)
+    {
+      session->opt->client_mfa_type = client_mfa_type;
+      return true;
+    }
   if (!(client_mfa_type >= 0 && client_mfa_type < MFA_TYPE_N))
     return false;
   if (session->opt->mfa_methods_list.mfa_methods[client_mfa_type].enabled)
@@ -3241,8 +3247,7 @@ process_mfa_options (int client_mfa_type, struct tls_session *session)
       session->opt->client_mfa_type = client_mfa_type;
       return true;
     }
-  else
-    return false;
+  return false;
 }
 
 /*

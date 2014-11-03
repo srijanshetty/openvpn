@@ -2322,28 +2322,35 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
       else
         {
           if (session->opt->client_mfa_type == MFA_TYPE_COOKIE)
-          {
-            if (!mfa_token_status || !mfa_cookie_timestamp_status)
-              {
-                msg(D_TLS_ERRORS, "TLS Error: Client did not provide session cookie");
-                ks->authenticated = false;
-              }
-            else if (session->opt->mfa_session)
-              verify_mfa_cookie (session, cookie);
-            else
-              ks->authenticated = false;
-          }
+            {
+              if (!mfa_token_status || !mfa_cookie_timestamp_status)
+                {
+                  msg(D_TLS_ERRORS, "TLS Error: Client did not provide session cookie");
+                  ks->authenticated = false;
+                }
+              else if (session->opt->mfa_session)
+                {
+                  if (!verify_mfa_cookie (session, cookie))
+                    {
+                      msg(D_TLS_ERRORS, "TLS Error: Cookie authentication failed");
+                      ks->authenticated = false;
+                    }
+                }
+              else
+                {
+                  msg(D_TLS_ERRORS, "TLS Error: Client sent a cookie but MFA session is not enabled");
+                  ks->authenticated = false;
+                }
+            }
           else /* client used one of the MFA auth methods */
             {
-          /*
-           * set username to common name in case of OTP and PUSH
-           */
-          if (session->opt->client_mfa_type == MFA_TYPE_OTP
-              || session->opt->client_mfa_type == MFA_TYPE_PUSH)
-            {
-              strncpynt(mfa->username, session->common_name, USER_PASS_LEN);
-            }
-          verify_user_pass(mfa, multi, session, VERIFY_MFA_CREDENTIALS);
+              /* set username to common name in case of OTP and PUSH */
+              if (session->opt->client_mfa_type == MFA_TYPE_OTP
+                  || session->opt->client_mfa_type == MFA_TYPE_PUSH)
+                {
+                  strncpynt(mfa->username, session->common_name, USER_PASS_LEN);
+                }
+              verify_user_pass(mfa, multi, session, VERIFY_MFA_CREDENTIALS);
             }
         }
     }

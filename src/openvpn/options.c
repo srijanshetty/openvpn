@@ -6994,7 +6994,7 @@ add_option (struct options *options,
     {
       options->mfa_backward_compat = true;
     }
-  else if(strreq (p[0], "mfa-session-file"))
+  else if(streq (p[0], "mfa-session-file"))
     {
         options->mfa_session = true;
         if(p[1])

@@ -2308,7 +2308,7 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
                 msg(D_TLS_ERRORS, "TLS Error: Client did not provide session cookie");
                 ks->authenticated = false;
               }
-            else if (session->mfa_session)
+            else if (session->opt->mfa_session)
               verify_mfa_cookie (session, cookie);
             else
               ks->authenticated = false;

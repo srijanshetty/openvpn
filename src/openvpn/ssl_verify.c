@@ -1234,6 +1234,10 @@ verify_user_pass(struct user_pass *up, struct tls_multi *multi,
       && tls_lock_username (multi, up->username))
     {
       ks->authenticated = true;
+#ifdef ENABLE_MFA
+      if (flags == VERIFY_MFA_CREDENTIALS)
+        session->generate_mfa_cookie = true;
+#endif
 #ifdef PLUGIN_DEF_AUTH
       if (s1 == OPENVPN_PLUGIN_FUNC_DEFERRED)
 	ks->auth_deferred = true;

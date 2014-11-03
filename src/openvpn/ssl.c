@@ -2263,7 +2263,7 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
       mfa_type = (int) buf_read_u32 (buf, &mfa_type_status);
       if (!mfa_type_status)
         {
-          msg(D_TLS_ERRORS, "Bad MFA-type received");
+          msg(D_TLS_ERRORS, "TLS Error: MFA type not provided by peer");
           goto error;
         }
       ALLOC_OBJ_CLEAR_GC (mfa, struct user_pass, &gc);
@@ -2289,7 +2289,7 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
 
       verify_user_pass(up, multi, session
 #ifdef ENABLE_MFA
-              , VERIFY_USER_PASS_CREDENTIALS
+                       , VERIFY_USER_PASS_CREDENTIALS
 #endif
               );
     }
@@ -2317,7 +2317,7 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
       if (!process_mfa_options (mfa_type, session))
         {
           msg(D_TLS_ERRORS, "TLS Error: Client did not provide MFA credentials");
-          ks->authenticated = false;
+          goto error;
         }
       else
         {
@@ -2326,20 +2326,20 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
               if (!mfa_token_status || !mfa_cookie_timestamp_status)
                 {
                   msg(D_TLS_ERRORS, "TLS Error: Client did not provide session cookie");
-                  ks->authenticated = false;
+                  goto error;
                 }
               else if (session->opt->mfa_session)
                 {
                   if (!verify_mfa_cookie (session, cookie))
                     {
                       msg(D_TLS_ERRORS, "TLS Error: Cookie authentication failed");
-                      ks->authenticated = false;
+                      goto error;
                     }
                 }
               else
                 {
                   msg(D_TLS_ERRORS, "TLS Error: Client sent a cookie but MFA session is not enabled");
-                  ks->authenticated = false;
+                  goto error;
                 }
             }
           else /* client used one of the MFA auth methods */
@@ -2348,6 +2348,13 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
               if (session->opt->client_mfa_type == MFA_TYPE_OTP
                   || session->opt->client_mfa_type == MFA_TYPE_PUSH)
                 {
+                  /* Check size of CN before using it as username.
+                   * This will be required only if TLS_USERNAME_LENGTH > USER_PASS_LEN.
+                   */
+                  if (strlen (session->common_name) >= USER_PASS_LEN)
+                    {
+                      msg (D_TLS_ERRORS, "TLS Error: Common name is to be used as username for MFA authentication but it is greater than the maximum permissible length of %d characters", USER_PASS_LEN);
+                    }
                   strncpynt(mfa->username, session->common_name, USER_PASS_LEN);
                 }
               verify_user_pass(mfa, multi, session, VERIFY_MFA_CREDENTIALS);

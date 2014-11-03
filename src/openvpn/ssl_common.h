@@ -395,7 +395,7 @@ struct tls_session
   struct key_state key[KS_SIZE];
 
 #ifdef ENABLE_MFA
-  bool generate_mfa_cookie;    /* indicates whether we have to generate a MFA cookie */
+  bool generate_mfa_cookie;    /* indicates whether we have to generate an MFA cookie */
 #endif
 };
 

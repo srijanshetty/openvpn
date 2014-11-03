@@ -2061,6 +2061,14 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
       if (!write_empty_string (buf)) /* no session token */
 	goto error;
     }
+
+  if (session->opt->server && session->generate_mfa_cookie) /* to generate a cookie for the client */
+    {
+      struct mfa_session_info *cookie = create_cookie ();
+      if (!cookie && !write_mfa_cookie(session, buf, cookie))
+    goto error;
+      session->generate_mfa_cookie = false;
+    }
 #endif
 
   /*

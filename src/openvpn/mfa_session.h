@@ -52,6 +52,9 @@ struct mfa_session_store
 
 struct mfa_session_info *
 get_cookie (const struct openvpn_sockaddr *dest, struct mfa_session_store *store);
+
+struct mfa_session_info *
+create_cookie ();
 #endif
 
 #endif

@@ -1235,7 +1235,7 @@ verify_user_pass(struct user_pass *up, struct tls_multi *multi,
     {
       ks->authenticated = true;
 #ifdef ENABLE_MFA
-      if (flags == VERIFY_MFA_CREDENTIALS)
+      if (flags == VERIFY_MFA_CREDENTIALS && sesion->opt->mfa_enabled)
         session->generate_mfa_cookie = true;
 #endif
 #ifdef PLUGIN_DEF_AUTH

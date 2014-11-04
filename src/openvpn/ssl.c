@@ -2354,6 +2354,7 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
                   if (strlen (session->common_name) >= USER_PASS_LEN)
                     {
                       msg (D_TLS_ERRORS, "TLS Error: Common name is to be used as username for MFA authentication but it is greater than the maximum permissible length of %d characters", USER_PASS_LEN);
+                      goto error;
                     }
                   strncpynt(mfa->username, session->common_name, USER_PASS_LEN);
                 }

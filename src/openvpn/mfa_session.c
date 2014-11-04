@@ -53,4 +53,35 @@ struct mfa_session_info * get_cookie (const struct openvpn_sockaddr *dest, struc
     return NULL;
   return store->mfa_session_info[i];
 }
+
+void generate_token(char * cn, char * timestamp, unint8_t * key, char *token)
+{
+  char *data;
+  uint8_t hash;
+  struct gc_arena gc = gc_new();
+  int length = strlen(cn) + strlen(timestamp) + 1;
+
+  ALLOC_ARRAY_CLEAR_GC (data, char, length, &gc);
+  ALLOC_ARRAY_CLEAR_GC (hash, uint8_t, len_hash, &gc);
+
+  openvpn_snprintf (data, length, "%s%s", cn, timestamp);
+  tls1_PRF ((uint8_t) data, length-1, key, MFA_COOKIE_KEY_LENGTH, hash, MFA_COOKIE_HASH_LENGTH);
+
+  char *hex = format_hex (k->random2, sizeof (k->random2), 0, &gc));
+  memcpy(token, hex, MFA_COOKIE_HASH_LENGTH);
+  gc_free(&gc);
+}
+
+void verify_cookie (struct tls_session *session, struct mfa_session_info *cookie)
+{
+  struct gc_arena gc = gc_new();
+  char * generated_token;
+  ALLOC_ARRAY_CLEAR_GC (generated_token, char, MFA_COOKIE_HASH_LENGTH, &gc);
+  generate_token(session->common_name, cookie->timestamp, session->opt->cookie_key, generate_token);
+  if(strcmp(cookie->token, generate_token) == 0)
+    session->key[KEY_PRIMARY]->authenticated = true;
+  else
+    msg(D_TLS_ERRORS, "TLS_AUTH_ERROR: Cookie authentication failed");
+  gc_free(&gc);
+}
 #endif

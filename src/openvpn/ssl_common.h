@@ -235,7 +235,7 @@ struct tls_options
   char *mfa_session_file;
   int mfa_session_expire;
   struct mfa_session_store *cookie_jar;
-  uint8_t *cookieIV;
+  uint8_t *cookie_key;
 #endif
   bool replay;
   bool single_session;

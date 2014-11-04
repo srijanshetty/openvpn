@@ -215,7 +215,7 @@ struct context_1
                                 /**< Username and password for
                                  *   authentication. */
 #ifdef ENABLE_MFA
-  uint8_t cookieIV[MFA_COOKIE_IV_LENGTH];
+  uint8_t cookie_key[MFA_COOKIE_KEY_LENGTH];
 #endif
 #endif
 };

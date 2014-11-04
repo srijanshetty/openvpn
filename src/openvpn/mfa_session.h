@@ -34,7 +34,8 @@
 #ifdef ENABLE_MFA
 #define MAX_MFA_SESSIONS 128
 #define MFA_TOKEN_LENGTH 65
-#define MFA_COOKIE_IV_LENGTH 128
+#define MFA_COOKIE_KEY_LENGTH 32  /* in bytes */
+#define MFA_COOKIE_HASH_LENGTH 32
 #define MFA_TIMESTAMP_LENGTH 20
 struct mfa_session_info
 {
@@ -55,6 +56,9 @@ get_cookie (const struct openvpn_sockaddr *dest, struct mfa_session_store *store
 
 struct mfa_session_info *
 create_cookie ();
+
+void
+verify_cookie (tls_session *session, mfa_session_info *cookie);
 #endif
 
 #endif

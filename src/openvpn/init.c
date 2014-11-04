@@ -2142,7 +2142,7 @@ do_init_crypto_tls_c1 (struct context *c)
     }
 
 #ifdef ENABLE_MFA
-  prng_bytes(c->c1.cookieIV, MFA_COOKIE_IV_LENGTH);
+  prng_bytes(c->c1.cookie_key, MFA_COOKIE_KEY_LENGTH);
 #endif
 }
 
@@ -2209,7 +2209,7 @@ do_init_crypto_tls (struct context *c, const unsigned int flags)
   to.mfa_session = options->mfa_session;
   to.mfa_session_file = options->mfa_session_file;
   to.mfa_session_expire = options->mfa_session_expire;
-  to.cookieIV = c->c1.cookieIV;
+  to.cookie_key = c->c1.cookie_key;
 #endif
 #ifdef ENABLE_PUSH_PEER_INFO
   if (options->push_peer_info)		/* all there is */

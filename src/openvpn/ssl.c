@@ -1912,6 +1912,7 @@ push_peer_info(struct buffer *buf, struct tls_session *session)
   return ret;
 }
 
+#ifdef ENABLE_MFA
 /* Writes MFA credentials in key method 2 packet */
 bool write_mfa_credentials (struct tls_session *session, struct buffer *buf)
 {
@@ -1976,6 +1977,7 @@ bool write_mfa_cookie (struct tls_session *session,
   mfa_session_token_sent = true;
   return true;
 }
+#endif
 
 static bool
 key_method_2_write (struct buffer *buf, struct tls_session *session)
@@ -2313,6 +2315,7 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
 #ifdef ENABLE_MFA
   /*check for MFA options */
   if (tls_session_mfa_enabled(session) && peer_supports_mfa)
+  /* !peer_supports_mfa should fail earlier during compat check */
     {
       if (!process_mfa_options (mfa_type, session))
         {
@@ -2330,11 +2333,8 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
                 }
               else if (session->opt->mfa_session)
                 {
-                  if (!verify_mfa_cookie (session, cookie))
-                    {
-                      msg(D_TLS_ERRORS, "TLS Error: Cookie authentication failed");
-                      goto error;
-                    }
+                  verify_cookie (session, cookie);
+                  CLEAR (cookie.token);
                 }
               else
                 {

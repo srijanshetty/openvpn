@@ -249,6 +249,20 @@ tv_within_sigma (const struct timeval *t1, const struct timeval *t2, unsigned in
 }
 
 /*
+ * Is t1 ahead of t2 by minutes minutes
+ */
+static inline bool
+tv_within_minutes (const struct timeval *t1, const struct timeval *t2, unsigned int minutes)
+{
+  if (!tv_gt(t1, t2)) /* t1 should be greater */
+    return false;
+
+  struct timeval delta;
+  tv_delta (&delta, t1, t2);
+  return (delta->tv_sec < minutes * 60);
+}
+
+/*
  * Used to determine in how many seconds we should be
  * called again.
  */

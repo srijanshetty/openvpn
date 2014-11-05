@@ -32,6 +32,7 @@
 
 #include "mfa_session.h"
 #include "socket.h"
+#include "otime.h"
 
 #ifdef ENABLE_MFA
 struct mfa_session_info * get_cookie (const struct openvpn_sockaddr *dest, struct mfa_session_store *store)
@@ -85,14 +86,30 @@ create_cookie (struct tls_session *session, struct mfa_session_info *cookie)
 
 void verify_cookie (struct tls_session *session, struct mfa_session_info *cookie)
 {
+  // Check if the cookie has expired or not
+  struct timeval tv;
+  struct timeval now;
+  gettimeofday(&now, NULL);
+
+  if (!parse_time_string(cookie->timestamp, &tv))      /* Timestamp parsing failed */
+    goto error;
+
+  /* Check for expiration */
+  if (!tv_within_minutes(&now, &tv, session->opt->mfa_session_expire))
+    goto error;
+
   struct gc_arena gc = gc_new();
   char * generated_token;
   ALLOC_ARRAY_CLEAR_GC (generated_token, char, MFA_TOKEN_LENGTH, &gc);
   generate_token (session->common_name, cookie->timestamp, session->opt->cookie_key, generated_token);
+
   if (strcmp(cookie->token, generated_token) == 0)
     session->key[KS_PRIMARY].authenticated = true;
   else
-    msg(D_TLS_ERRORS, "TLS_AUTH_ERROR: Cookie authentication failed");
+    goto error;
+
+ error:
+  msg(D_TLS_ERRORS, "TLS_AUTH_ERROR: Cookie authentication failed");
   gc_free(&gc);
 }
 #endif

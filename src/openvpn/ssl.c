@@ -358,7 +358,7 @@ static struct user_pass auth_user_pass; /* GLOBAL */
 #ifdef ENABLE_MFA
 static bool auth_mfa_enabled;           /* GLOBAL */
 static struct user_pass auth_mfa;       /* GLOBAL */
-static bool mfa_session_token_sent = false;         /* GLOBAL */
+static bool mfa_session_token_sent;     /* GLOBAL */
 #endif
 
 #ifdef ENABLE_CLIENT_CR

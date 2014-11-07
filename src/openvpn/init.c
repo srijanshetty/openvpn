@@ -430,7 +430,7 @@ init_query_passwords (struct context *c)
 #ifdef ENABLE_MFA
   if (c->options.mfa_methods_list.len > 0 && c->options.tls_client)
     {
-      auth_mfa_setup (&(c->options.mfa_methods_list), c->options.mfa_session);
+      auth_mfa_setup (&(c->options.mfa_methods_list), c->options.mfa_session, false);
     }
 #endif
 #endif

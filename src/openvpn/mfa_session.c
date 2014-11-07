@@ -70,12 +70,13 @@ void generate_token(char * common_name, char * timestamp, uint8_t * key, char *t
 
   char *hex = format_hex_ex (hash, MFA_COOKIE_HASH_LENGTH, MFA_TOKEN_LENGTH, 100, NULL, &gc);
   memcpy(token, hex, MFA_TOKEN_LENGTH);
-  *(token + MFA_TOKEN_LENGTH - 1) = '\0'; // required ?
+
+  printf("\n\n\n Server Generated Token: %s\n\n\n", token);
+
   gc_free(&gc);
 }
 
-void
-create_cookie (struct tls_session *session, struct mfa_session_info *cookie)
+void create_cookie (struct tls_session *session, struct mfa_session_info *cookie)
 {
   struct timeval tv;
   gettimeofday (&tv, NULL);

@@ -367,10 +367,11 @@ static char *auth_challenge; /* GLOBAL */
 
 #ifdef ENABLE_MFA
 void
-auth_mfa_setup (struct mfa_methods_list *mfa, bool mfa_session)
+auth_mfa_setup (struct mfa_methods_list *mfa, bool mfa_session, bool cookie_read)
 {
   auth_mfa_enabled = true;
-  if (!auth_mfa.defined && (!mfa_session || mfa_session_token_sent))
+  if (!auth_mfa.defined &&
+          ((mfa_session && !cookie_read) || !mfa_session || mfa_session_token_sent))
     {
       if (mfa->mfa_methods[MFA_TYPE_OTP].enabled)
         {
@@ -1910,7 +1911,7 @@ bool write_mfa_credentials (struct tls_session *session, struct buffer *buf)
 {
   struct mfa_methods_list *m = &(session->opt->mfa_methods_list);
   int mfa_type = get_enabled_mfa_method(m);
-  auth_mfa_setup(m, session->opt->mfa_session);
+  auth_mfa_setup(m, session->opt->mfa_session, true);
   if (mfa_type == -1)
     return false;
   if (!buf_write_u32 (buf, mfa_type))
@@ -2032,7 +2033,8 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
     {
       if (session->opt->mfa_session && !mfa_session_token_sent) /* don't send cookie on retry */
         {
-          struct mfa_session_info *cookie = get_cookie (&(ks->remote_addr.dest), session->opt->cookie_jar);
+          /* struct mfa_session_info *cookie = get_cookie (&(ks->remote_addr.dest), session->opt->cookie_jar); */
+            struct mfa_session_info *cookie = NULL;
           if (!cookie)
             {
               if (!write_mfa_credentials(session, buf))

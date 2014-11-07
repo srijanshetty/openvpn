@@ -35,24 +35,24 @@
 #include "otime.h"
 
 #ifdef ENABLE_MFA
-struct mfa_session_info * get_cookie (const struct openvpn_sockaddr *dest, struct mfa_session_store *store)
+struct mfa_session_info * get_cookie (const struct openvpn_sockaddr *dest, struct mfa_session_store *cookie_jar)
 {
   struct gc_arena gc = gc_new();
   int i;
   const char *addr = print_openvpn_sockaddr(dest, &gc);
   if (!addr)
     return NULL;
-  for (i = 0; i < store->len; i++)
+  for (i = 0; i < cookie_jar->len; i++)
     {
-      if (!strcmp(addr, store->mfa_session_info[i]->remote_address))
+      if (!strcmp(addr, cookie_jar->mfa_session_info[i]->remote_address))
         {
           break;
         }
     }
   gc_free(&gc);
-  if (i == store->len)
+  if (i == cookie_jar->len)
     return NULL;
-  return store->mfa_session_info[i];
+  return cookie_jar->mfa_session_info[i];
 }
 
 void generate_token(char * common_name, char * timestamp, uint8_t * key, char *token)

@@ -371,7 +371,7 @@ auth_mfa_setup (struct mfa_methods_list *mfa, bool mfa_session, bool cookie_read
 {
   auth_mfa_enabled = true;
   if (!auth_mfa.defined &&
-          ((mfa_session && !cookie_read) || !mfa_session || mfa_session_token_sent))
+          ((mfa_session && cookie_read) || !mfa_session || mfa_session_token_sent))
     {
       if (mfa->mfa_methods[MFA_TYPE_OTP].enabled)
         {
@@ -2045,8 +2045,7 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
     {
       if (session->opt->mfa_session && !mfa_session_token_sent) /* don't send cookie on retry */
         {
-          /* struct mfa_session_info *cookie = get_cookie (&(ks->remote_addr.dest), session->opt->cookie_jar); */
-            struct mfa_session_info *cookie = NULL;
+          struct mfa_session_info *cookie = get_cookie (&(ks->remote_addr.dest), session->opt->cookie_jar);
           if (!cookie)
             {
               if (!write_mfa_credentials(session, buf))
@@ -2369,6 +2368,7 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
   else if (mfa_client_read_token(session) && peer_supports_mfa)
     {
       /* write cookie->token to file */
+      ks->authenticated = true;
     }
   else
     {

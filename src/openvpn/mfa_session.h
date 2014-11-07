@@ -34,6 +34,7 @@
 #include "ssl_verify.h"
 
 #ifdef ENABLE_MFA
+#define MAX_SESSION_VALIDITY 100000
 #define MAX_MFA_SESSIONS 128
 #define MFA_TOKEN_LENGTH 65
 #define MFA_COOKIE_KEY_LENGTH 32  /* in bytes */

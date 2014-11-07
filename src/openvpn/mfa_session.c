@@ -96,7 +96,7 @@ void verify_cookie (struct tls_session *session, struct mfa_session_info *cookie
     goto error;
 
   /* Check for expiration */
-  if (!tv_within_minutes(&now, &tv, session->opt->mfa_session_expire))
+  if (!tv_within_hours(&now, &tv, session->opt->mfa_session_expire))
     goto error;
 
   struct gc_arena gc = gc_new();

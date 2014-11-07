@@ -66,12 +66,10 @@ void generate_token(char * common_name, char * timestamp, uint8_t * key, char *t
   ALLOC_ARRAY_CLEAR_GC (hash, uint8_t, MFA_COOKIE_HASH_LENGTH, &gc);
 
   openvpn_snprintf (data, length, "%s%s", common_name, timestamp);
-  tls1_PRF ((uint8_t *) data, length-1, key, MFA_COOKIE_KEY_LENGTH, hash, MFA_COOKIE_HASH_LENGTH);
+  mfa_PRF ((uint8_t *) data, length-1, key, MFA_COOKIE_KEY_LENGTH, hash, MFA_COOKIE_HASH_LENGTH);
 
   char *hex = format_hex_ex (hash, MFA_COOKIE_HASH_LENGTH, MFA_TOKEN_LENGTH, 100, NULL, &gc);
   memcpy(token, hex, MFA_TOKEN_LENGTH);
-
-  printf("\n\n\n Server Generated Token: %s\n\n\n", token);
 
   gc_free(&gc);
 }

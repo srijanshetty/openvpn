@@ -405,7 +405,9 @@ void ssl_purge_auth (const bool auth_user_pass_only);
 
 void ssl_set_auth_token (const char *token);
 
-void tls1_PRF (uint8_t *label, int label_len, const uint8_t *sec, int slen, uint8_t *out1, int olen);
+#ifdef ENABLE_MFA
+void mfa_PRF (uint8_t *label, int label_len, const uint8_t *sec, int slen, uint8_t *out1, int olen);
+#endif
 
 #ifdef ENABLE_CLIENT_CR
 /*

@@ -2069,6 +2069,8 @@ options_postprocess_verify_ce (const struct options *options, const struct conne
 #ifdef ENABLE_MFA
       if (options->mfa_session_file)
 	msg (M_USAGE, "-mfa-session-file cannot be used with --mode server");
+      if (options->mfa_session_expire > MAX_SESSION_VALIDITY)
+	msg (M_USAGE, "--mfa-session-expiration cannot be greater than %d hours", MAX_SESSION_VALIDITY);
 #endif
 
 	{
@@ -7012,30 +7014,30 @@ add_option (struct options *options,
     }
   else if(streq (p[0], "mfa-session-file"))
     {
-        options->mfa_session = true;
-        if(p[1])
-          {
-            options->mfa_session_file = p[1];
-          }
-        else
-          {
-            msg(msglevel, "--mfa-session-file requires the name of the file to store session tokens");
-            goto err;
-          }
+      options->mfa_session = true;
+      if(p[1])
+        {
+          options->mfa_session_file = p[1];
+        }
+      else
+        {
+          msg(msglevel, "--mfa-session-file requires the name of the file to store session tokens");
+          goto err;
+        }
     }
   else if(streq(p[0], "mfa-session-expiration"))
     {
-        options->mfa_session = true;
-        if(p[1])
-          {
-            options->mfa_session_expire = positive_atoi(p[1]);
-          }
-        else
-          {
-            msg(msglevel, "--mfa-session-expiry requires an expiration time for cookies");
-            goto err;
-          }
-  }
+      options->mfa_session = true;
+      if(p[1])
+        {
+          options->mfa_session_expire = positive_atoi(p[1]);
+        }
+      else
+        {
+          msg(msglevel, "--mfa-session-expiry requires an expiration time for cookies");
+          goto err;
+        }
+    }
 #endif
 #ifdef ENABLE_X509ALTUSERNAME
   else if (streq (p[0], "x509-username-field") && p[1])

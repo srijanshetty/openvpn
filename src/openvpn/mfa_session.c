@@ -108,6 +108,8 @@ void verify_cookie (struct tls_session *session, struct mfa_session_info *cookie
   else
     goto error;
 
+  gc_free(&gc);
+
  error:
   msg(D_TLS_ERRORS, "TLS_AUTH_ERROR: Cookie authentication failed");
   gc_free(&gc);

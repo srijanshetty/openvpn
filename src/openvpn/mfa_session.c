@@ -85,6 +85,7 @@ void create_cookie (struct tls_session *session, struct mfa_session_info *cookie
 
 void verify_cookie (struct tls_session *session, struct mfa_session_info *cookie)
 {
+  struct gc_arena gc = gc_new();
   // Check if the cookie has expired or not
   struct timeval tv;
   struct timeval now;
@@ -97,13 +98,15 @@ void verify_cookie (struct tls_session *session, struct mfa_session_info *cookie
   if (!tv_within_hours(&now, &tv, session->opt->mfa_session_expire))
     goto error;
 
-  struct gc_arena gc = gc_new();
   char * generated_token;
   ALLOC_ARRAY_CLEAR_GC (generated_token, char, MFA_TOKEN_LENGTH, &gc);
   generate_token (session->common_name, cookie->timestamp, session->opt->cookie_key, generated_token);
 
   if (strcmp(cookie->token, generated_token) == 0)
-    session->key[KS_PRIMARY].authenticated = true;
+    {
+      msg(M_INFO, "Cookie authentication successful");
+      session->key[KS_PRIMARY].authenticated = true;
+    }
   else
     goto error;
 

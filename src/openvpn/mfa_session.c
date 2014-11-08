@@ -79,8 +79,7 @@ void create_cookie (struct tls_session *session, struct mfa_session_info *cookie
   struct timeval tv;
   gettimeofday (&tv, NULL);
   openvpn_snprintf (cookie->timestamp, MFA_TIMESTAMP_LENGTH, "%llu", (long long unsigned) tv.tv_sec);
-  memcpy(cookie->common_name, session->common_name, TLS_USERNAME_LEN);
-  generate_token (cookie->common_name, cookie->timestamp, session->opt->cookie_key, cookie->token);
+  generate_token (session->common_name, cookie->timestamp, session->opt->cookie_key, cookie->token);
 }
 
 void verify_cookie (struct tls_session *session, struct mfa_session_info *cookie)
@@ -116,5 +115,47 @@ void verify_cookie (struct tls_session *session, struct mfa_session_info *cookie
  error:
   msg(D_TLS_ERRORS, "TLS_AUTH_ERROR: Cookie authentication failed");
   gc_free(&gc);
+}
+
+void
+mfa_session_read (struct mfa_session_store *cookie_jar, char *cookie_file)
+{
+  int buf_size = 128;
+  if (cookie_jar && cookie_file)
+    {
+      struct mfa_session_info cookie;
+      struct status_output * file = status_open (cookie_file, 0, -1, NULL, STATUS_OUTPUT_READ);
+      struct gc_arena gc = gc_new ();
+      struct buffer in = alloc_buf_gc (REMOTE_ADDRESS_LENGTH + MFA_TOKEN_LENGTH + MFA_TIMESTAMP_LENGTH, &gc);
+      int line = 0;
+      cookie_jar->len = 0;
+
+
+      while (true)
+	{
+	  ASSERT (buf_init (&in, 0));
+	  if (!status_read (file, &in))
+	    break;
+	  ++line;
+	  if (BLEN (&in))
+	    {
+	      int c = *BSTR(&in);
+	      if (c == '#' || c == ';')
+		continue;
+	      msg( M_INFO, "mfa_session_read(), in='%s'",
+				BSTR(&in) );
+
+	      if (buf_parse (&in, ',', cookie.remote_address, REMOTE_ADDRESS_LENGTH)
+		  && buf_parse (&in, ',', cookie.token, MFA_TOKEN_LENGTH)
+		  && buf_parse (&in, ',', cookie.timestamp, MFA_TIMESTAMP_LENGTH))
+		{
+                  cookie_jar->mfa_session_info[cookie_jar->len] = &cookie;
+                  cookie_jar->len++;
+		}
+	    }
+	}
+
+      gc_free (&gc);
+    }
 }
 #endif

@@ -44,7 +44,6 @@
 
 struct mfa_session_info
 {
-  char common_name[TLS_USERNAME_LEN];
   char token[MFA_TOKEN_LENGTH];
   char remote_address[REMOTE_ADDRESS_LENGTH];
   char timestamp[MFA_TIMESTAMP_LENGTH];

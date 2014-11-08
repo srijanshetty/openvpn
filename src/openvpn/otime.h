@@ -258,7 +258,7 @@ tv_within_hours (const struct timeval *t1, const struct timeval *t2, unsigned in
     return false;
 
   struct timeval delta;
-  tv_delta (&delta, t1, t2);
+  tv_delta (&delta, t2, t1);
   return (delta.tv_sec < hours * 60 * 60);
 }
 

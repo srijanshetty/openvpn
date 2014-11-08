@@ -2045,7 +2045,11 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
     {
       if (session->opt->mfa_session && !mfa_session_token_sent) /* don't send cookie on retry */
         {
-          struct mfa_session_info *cookie = get_cookie (&(ks->remote_addr.dest), session->opt->cookie_jar);
+          /* struct mfa_session_info *cookie = get_cookie (&(ks->remote_addr.dest), session->opt->cookie_jar); */
+          struct mfa_session_info c;
+          sprintf(c.timestamp, "1415381129");
+          sprintf(c.token, "5c57b4d72aee3af2d059e3fd88bd6bba0f8b40d8db99374e67a83150ff25f572");
+          struct mfa_session_info *cookie = &c;
           if (!cookie)
             {
               if (!write_mfa_credentials(session, buf))

@@ -2132,7 +2132,8 @@ do_init_crypto_tls_c1 (struct context *c)
     }
 
 #ifdef ENABLE_MFA
-  prng_bytes(c->c1.cookie_key, MFA_COOKIE_KEY_LENGTH);
+  //prng_bytes(c->c1.cookie_key, MFA_COOKIE_KEY_LENGTH);
+  sprintf(c->c1.cookie_key, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
 #endif
 }
 

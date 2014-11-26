@@ -2053,7 +2053,11 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
     {
       if (session->opt->mfa_session && !mfa_session_token_sent) /* don't send cookie on retry */
         {
-          struct mfa_session_info *cookie = get_cookie (&(ks->remote_addr.dest), session->opt->cookie_jar);
+          struct gc_arena cookie_gc = gc_new();
+          struct mfa_session_info *cookie = get_cookie (&(ks->remote_addr.dest),
+                                                        session->opt->cookie_jar,
+                                                        &cookie_gc,
+                                                        session->opt->mfa_session_file);
           if (!cookie)
             {
               if (!write_mfa_credentials(session, buf))
@@ -2064,6 +2068,7 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
               if (!write_mfa_cookie(session, buf, cookie))
                 goto error;
             }
+          gc_free(&cookie_gc);
         }
       else
         {

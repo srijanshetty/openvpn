@@ -53,10 +53,11 @@ struct mfa_session_store
 {
   int len;
   struct mfa_session_info *mfa_session_info[MAX_MFA_SESSIONS];
+  struct gc_arena gc;
 };
 
 struct mfa_session_info *
-get_cookie (const struct openvpn_sockaddr *dest, struct mfa_session_store *store);
+get_cookie (const struct openvpn_sockaddr *dest, struct mfa_session_store *store, struct gc_arena *gc, char *cookie_file);
 
 void
 create_cookie (struct tls_session *session, struct mfa_session_info *cookie);

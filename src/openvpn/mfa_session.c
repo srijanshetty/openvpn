@@ -35,11 +35,56 @@
 #include "otime.h"
 
 #ifdef ENABLE_MFA
-struct mfa_session_info * get_cookie (const struct openvpn_sockaddr *dest, struct mfa_session_store *cookie_jar)
+void
+mfa_session_read (struct mfa_session_store *cookie_jar, char *cookie_file, struct gc_arena *gc)
 {
-  struct gc_arena gc = gc_new();
+  int buf_size = 128;
+  if (cookie_jar && cookie_file)
+    {
+      struct status_output * file = status_open (cookie_file, 0, -1, NULL, STATUS_OUTPUT_READ);
+      struct gc_arena local_gc = gc_new ();
+      struct buffer in = alloc_buf_gc (REMOTE_ADDRESS_LENGTH + MFA_TOKEN_LENGTH + MFA_TIMESTAMP_LENGTH, &local_gc);
+      int line = 0;
+      cookie_jar->len = 0;
+
+
+      while (true)
+	{
+	  ASSERT (buf_init (&in, 0));
+	  if (!status_read (file, &in))
+	    break;
+	  ++line;
+	  if (BLEN (&in))
+	    {
+	      int c = *BSTR(&in);
+	      if (c == '#' || c == ';')
+		continue;
+	      msg( M_INFO, "mfa_session_read(), in='%s'",
+				BSTR(&in) );
+
+              struct mfa_session_info *cookie;
+              ALLOC_OBJ_CLEAR_GC (cookie, struct mfa_session_info, gc);
+	      if (buf_parse (&in, ',', cookie->remote_address, REMOTE_ADDRESS_LENGTH)
+		  && buf_parse (&in, ',', cookie->token, MFA_TOKEN_LENGTH)
+		  && buf_parse (&in, ',', cookie->timestamp, MFA_TIMESTAMP_LENGTH))
+		{
+                  cookie_jar->mfa_session_info[cookie_jar->len] = cookie;
+                  cookie_jar->len++;
+		}
+	    }
+	}
+      status_close(file);
+      CLEAR(in);
+      gc_free (&local_gc);
+    }
+}
+
+struct mfa_session_info * get_cookie (const struct openvpn_sockaddr *dest, struct mfa_session_store *cookie_jar, struct gc_arena *gc, char *cookie_file)
+{
+  struct gc_arena local_gc = gc_new();
+  mfa_session_read(cookie_jar, cookie_file, gc);
   int i;
-  const char *addr = print_openvpn_sockaddr(dest, &gc);
+  const char *addr = print_openvpn_sockaddr(dest, &local_gc);
   if (!addr)
     return NULL;
   for (i = 0; i < cookie_jar->len; i++)
@@ -49,7 +94,7 @@ struct mfa_session_info * get_cookie (const struct openvpn_sockaddr *dest, struc
           break;
         }
     }
-  gc_free(&gc);
+  gc_free(&local_gc);
   if (i == cookie_jar->len)
     return NULL;
   return cookie_jar->mfa_session_info[i];
@@ -117,45 +162,4 @@ void verify_cookie (struct tls_session *session, struct mfa_session_info *cookie
   gc_free(&gc);
 }
 
-void
-mfa_session_read (struct mfa_session_store *cookie_jar, char *cookie_file)
-{
-  int buf_size = 128;
-  if (cookie_jar && cookie_file)
-    {
-      struct mfa_session_info cookie;
-      struct status_output * file = status_open (cookie_file, 0, -1, NULL, STATUS_OUTPUT_READ);
-      struct gc_arena gc = gc_new ();
-      struct buffer in = alloc_buf_gc (REMOTE_ADDRESS_LENGTH + MFA_TOKEN_LENGTH + MFA_TIMESTAMP_LENGTH, &gc);
-      int line = 0;
-      cookie_jar->len = 0;
-
-
-      while (true)
-	{
-	  ASSERT (buf_init (&in, 0));
-	  if (!status_read (file, &in))
-	    break;
-	  ++line;
-	  if (BLEN (&in))
-	    {
-	      int c = *BSTR(&in);
-	      if (c == '#' || c == ';')
-		continue;
-	      msg( M_INFO, "mfa_session_read(), in='%s'",
-				BSTR(&in) );
-
-	      if (buf_parse (&in, ',', cookie.remote_address, REMOTE_ADDRESS_LENGTH)
-		  && buf_parse (&in, ',', cookie.token, MFA_TOKEN_LENGTH)
-		  && buf_parse (&in, ',', cookie.timestamp, MFA_TIMESTAMP_LENGTH))
-		{
-                  cookie_jar->mfa_session_info[cookie_jar->len] = &cookie;
-                  cookie_jar->len++;
-		}
-	    }
-	}
-
-      gc_free (&gc);
-    }
-}
 #endif

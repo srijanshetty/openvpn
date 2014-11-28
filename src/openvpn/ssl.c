@@ -2055,7 +2055,6 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
         {
           struct gc_arena cookie_gc = gc_new();
           struct mfa_session_info *cookie = get_cookie (&(ks->remote_addr.dest),
-                                                        session->opt->cookie_jar,
                                                         &cookie_gc,
                                                         session->opt->mfa_session_file);
           if (!cookie)
@@ -2067,8 +2066,9 @@ key_method_2_write (struct buffer *buf, struct tls_session *session)
             {
               if (!write_mfa_cookie(session, buf, cookie))
                 goto error;
+              CLEAR (cookie);
             }
-          gc_free(&cookie_gc);
+          gc_free (&cookie_gc);
         }
       else
         {
@@ -2385,6 +2385,14 @@ key_method_2_read (struct buffer *buf, struct tls_multi *multi, struct tls_sessi
   else if (mfa_client_read_token(session) && peer_supports_mfa)
     {
       /* write cookie->token to file */
+      if(mfa_token_status && mfa_cookie_timestamp_status)
+        {
+          update_cookie_file(cookie, session->opt->mfa_session_file, &(ks->remote_addr.dest));
+          /*if(!write_cookie_to_file(cookie, session->opt->mfa_session_file, ks->remote_addr.dest))
+            {
+              msg(M_INFO, "Unable to write cookie to file %s", session->opt->mfa_session_file);
+            }*/
+        }
       ks->authenticated = true;
     }
   else

@@ -38,7 +38,6 @@
 void
 mfa_session_read (struct mfa_session_store *cookie_jar, char *cookie_file, struct gc_arena *gc)
 {
-  int buf_size = 128;
   if (cookie_jar && cookie_file)
     {
       struct status_output * file = status_open (cookie_file, 0, -1, NULL, STATUS_OUTPUT_READ);
@@ -57,10 +56,6 @@ mfa_session_read (struct mfa_session_store *cookie_jar, char *cookie_file, struc
 	  if (BLEN (&in))
 	    {
 	      int c = *BSTR(&in);
-	      if (c == '#' || c == ';')
-		continue;
-	      msg( M_INFO, "mfa_session_read(), in='%s'",
-				BSTR(&in) );
 
               struct mfa_session_info *cookie;
               ALLOC_OBJ_CLEAR_GC (cookie, struct mfa_session_info, gc);
@@ -70,6 +65,11 @@ mfa_session_read (struct mfa_session_store *cookie_jar, char *cookie_file, struc
 		{
                   cookie_jar->mfa_session_info[cookie_jar->len] = cookie;
                   cookie_jar->len++;
+                  if(cookie_jar->len == MAX_MFA_SESSIONS)
+                    {
+                      msg(M_INFO, "Number of session tokens in mfa-session file exceeds the maximum of %d", MAX_MFA_SESSIONS);
+                      break;
+                    }
 		}
 	    }
 	}
@@ -79,25 +79,74 @@ mfa_session_read (struct mfa_session_store *cookie_jar, char *cookie_file, struc
     }
 }
 
-struct mfa_session_info * get_cookie (const struct openvpn_sockaddr *dest, struct mfa_session_store *cookie_jar, struct gc_arena *gc, char *cookie_file)
+void
+update_cookie_file (struct mfa_session_info *cookie, char * cookie_file, struct openvpn_sockaddr *dest)
+{
+  struct mfa_session_store *cookie_jar;
+  struct gc_arena gc = gc_new();
+  ALLOC_OBJ_CLEAR_GC(cookie_jar, struct mfa_session_store, &gc);
+  mfa_session_read (cookie_jar, cookie_file, &gc);
+  const char * remote_address = print_openvpn_sockaddr (dest, &gc);
+  struct status_output * file = status_open (cookie_file, 0, -1, NULL, STATUS_OUTPUT_WRITE);
+  int i;
+  bool write_current = false;
+  for (i = 0; i < cookie_jar->len; i++)
+    {
+      struct mfa_session_info * current_cookie = cookie_jar->mfa_session_info[i];
+      if (strcmp(current_cookie->remote_address, remote_address) == 0)
+        {
+          CLEAR(current_cookie->token);
+          CLEAR(current_cookie->timestamp);
+          memcpy(current_cookie->token, cookie->token, MFA_TOKEN_LENGTH);
+          memcpy(current_cookie->timestamp, cookie->timestamp, MFA_TIMESTAMP_LENGTH);
+          write_current = true;
+        }
+      status_printf(file, "%s,%s,%s",
+                    current_cookie->remote_address,
+                    current_cookie->token,
+                    current_cookie->timestamp);
+    }
+  if (!write_current)
+    {
+      status_printf(file, "%s,%s,%s",
+                    remote_address,
+                    cookie->token,
+                    cookie->timestamp);
+    }
+  status_close(file);
+  CLEAR(cookie_jar);
+  gc_free(&gc);
+}
+
+
+struct mfa_session_info * get_cookie (const struct openvpn_sockaddr *dest, struct gc_arena *gc, char *cookie_file)
 {
   struct gc_arena local_gc = gc_new();
-  mfa_session_read(cookie_jar, cookie_file, gc);
+  struct mfa_session_store *cookie_jar;
+  ALLOC_OBJ_CLEAR_GC (cookie_jar, struct mfa_session_store, &local_gc);
+  mfa_session_read (cookie_jar, cookie_file, &local_gc);
   int i;
-  const char *addr = print_openvpn_sockaddr(dest, &local_gc);
+  struct mfa_session_info *correct_cookie;
+  ALLOC_OBJ_CLEAR_GC(correct_cookie, struct mfa_session_info, gc);
+  const char *addr = print_openvpn_sockaddr (dest, &local_gc);
   if (!addr)
     return NULL;
   for (i = 0; i < cookie_jar->len; i++)
     {
-      if (!strcmp(addr, cookie_jar->mfa_session_info[i]->remote_address))
+      if (!strcmp (addr, cookie_jar->mfa_session_info[i]->remote_address))
         {
           break;
         }
+      else
+        {
+          CLEAR (cookie_jar->mfa_session_info[i]);
+        }
     }
-  gc_free(&local_gc);
   if (i == cookie_jar->len)
     return NULL;
-  return cookie_jar->mfa_session_info[i];
+  correct_cookie = cookie_jar->mfa_session_info[i];
+  gc_free(&local_gc);
+  return correct_cookie;
 }
 
 void generate_token(char * common_name, char * timestamp, uint8_t * key, char *token)

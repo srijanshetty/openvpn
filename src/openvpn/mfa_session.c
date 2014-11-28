@@ -144,7 +144,7 @@ struct mfa_session_info * get_cookie (const struct openvpn_sockaddr *dest, struc
     }
   if (i == cookie_jar->len)
     return NULL;
-  correct_cookie = cookie_jar->mfa_session_info[i];
+  *correct_cookie = *(cookie_jar->mfa_session_info[i]);
   gc_free(&local_gc);
   return correct_cookie;
 }

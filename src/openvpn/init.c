@@ -2128,6 +2128,14 @@ do_init_crypto_tls_c1 (struct context *c)
 				 flags);
 	}
 
+#ifdef ENABLE_MFA
+      if (c->options.tls_server && c->options.mfa_session)
+        {
+      /* key for creating session tokens for MFA session resumption */
+          prng_bytes(c->c1.cookie_key, MFA_COOKIE_KEY_LENGTH);
+        }
+#endif
+
 #if 0 /* was: #if ENABLE_INLINE_FILES --  Note that enabling this code will break restarts */
       if (options->priv_key_file_inline)
 	{
@@ -2140,10 +2148,6 @@ do_init_crypto_tls_c1 (struct context *c)
     {
       msg (D_INIT_MEDIUM, "Re-using SSL/TLS context");
     }
-
-#ifdef ENABLE_MFA
-  prng_bytes(c->c1.cookie_key, MFA_COOKIE_KEY_LENGTH);
-#endif
 }
 
 static void
@@ -3653,6 +3657,7 @@ inherit_context_child (struct context *dest,
   /* inherit SSL context */
   dest->c1.ks.ssl_ctx = src->c1.ks.ssl_ctx;
   dest->c1.ks.tls_auth_key = src->c1.ks.tls_auth_key;
+  memcpy(dest->c1.cookie_key, src->c1.cookie_key, sizeof(src->c1.cookie_key));
 #endif
 #endif
 

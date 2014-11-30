@@ -82,6 +82,8 @@ mfa_session_read (struct mfa_session_store *cookie_jar, char *cookie_file, struc
 void
 update_cookie_file (struct mfa_session_info *cookie, char * cookie_file, struct openvpn_sockaddr *dest)
 {
+  struct timeval now, tv;
+  gettimeofday (&now, NULL);
   struct mfa_session_store *cookie_jar;
   struct gc_arena gc = gc_new();
   ALLOC_OBJ_CLEAR_GC(cookie_jar, struct mfa_session_store, &gc);
@@ -93,6 +95,14 @@ update_cookie_file (struct mfa_session_info *cookie, char * cookie_file, struct 
   for (i = 0; i < cookie_jar->len; i++)
     {
       struct mfa_session_info * current_cookie = cookie_jar->mfa_session_info[i];
+      if (!parse_time_string(current_cookie->timestamp, &tv))      /* Timestamp parsing failed */
+        {
+          msg(M_INFO, "Found invalid timestamp in cookie file, ignoring");
+          continue;
+        }
+      /* Do not write cookie to file if it has expired. */
+      if (tv_gt(&now, &tv))
+        continue;
       if (strcmp(current_cookie->remote_address, remote_address) == 0)
         {
           CLEAR(current_cookie->token);
@@ -172,7 +182,9 @@ void create_cookie (struct tls_session *session, struct mfa_session_info *cookie
 {
   struct timeval tv;
   gettimeofday (&tv, NULL);
-  openvpn_snprintf (cookie->timestamp, MFA_TIMESTAMP_LENGTH, "%llu", (long long unsigned) tv.tv_sec);
+  long long unsigned expiry_time = (long long unsigned) tv.tv_sec +
+                                   (long long unsigned) session->opt->mfa_session_expire * 3600;
+  openvpn_snprintf (cookie->timestamp, MFA_TIMESTAMP_LENGTH, "%llu", expiry_time);
   generate_token (session->common_name, cookie->timestamp, session->opt->cookie_key, cookie->token);
 }
 
@@ -188,7 +200,7 @@ void verify_cookie (struct tls_session *session, struct mfa_session_info *cookie
     goto error;
 
   /* Check for expiration */
-  if (!tv_within_hours(&now, &tv, session->opt->mfa_session_expire))
+  if (tv_gt(&now, &tv))
     goto error;
 
   char * generated_token;

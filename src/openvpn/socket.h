@@ -353,7 +353,8 @@ void sd_close (socket_descriptor_t *sd);
 const char *print_sockaddr_ex (const struct sockaddr *addr,
 			       const char* separator,
 			       const unsigned int flags,
-			       struct gc_arena *gc);
+			       struct gc_arena *gc,
+                               bool *status);
 
 static inline
 const char *print_openvpn_sockaddr_ex (const struct openvpn_sockaddr *addr,
@@ -361,21 +362,21 @@ const char *print_openvpn_sockaddr_ex (const struct openvpn_sockaddr *addr,
 			       const unsigned int flags,
 			       struct gc_arena *gc)
 {
-    return print_sockaddr_ex(&addr->addr.sa, separator, flags, gc);
+    return print_sockaddr_ex(&addr->addr.sa, separator, flags, gc, NULL);
 }
 
 static inline
 const char *print_openvpn_sockaddr (const struct openvpn_sockaddr *addr,
 			    struct gc_arena *gc)
 {
-    return print_sockaddr_ex (&addr->addr.sa, ":", PS_SHOW_PORT, gc);
+    return print_sockaddr_ex (&addr->addr.sa, ":", PS_SHOW_PORT, gc, NULL);
 }
 
 static inline
 const char *print_sockaddr (const struct sockaddr *addr,
                                     struct gc_arena *gc)
 {
-    return print_sockaddr_ex (addr, ":", PS_SHOW_PORT, gc);
+    return print_sockaddr_ex (addr, ":", PS_SHOW_PORT, gc, NULL);
 }
 
 

@@ -35,6 +35,17 @@
 #include "otime.h"
 
 #ifdef ENABLE_MFA
+
+const char *
+mfa_print_sockaddr (const struct openvpn_sockaddr *dest, struct gc_arena *gc)
+{
+    bool status;
+    const char *addr = print_sockaddr_ex (&dest->addr.sa, ":", PS_SHOW_PORT, gc, &status);
+    if (status == false)
+        return NULL;
+    return addr;
+}
+
 void
 mfa_session_read (struct mfa_session_store *cookie_jar, char *cookie_file, struct gc_arena *gc)
 {
@@ -88,7 +99,7 @@ update_cookie_file (struct mfa_session_info *cookie, char * cookie_file, struct 
   struct gc_arena gc = gc_new();
   ALLOC_OBJ_CLEAR_GC(cookie_jar, struct mfa_session_store, &gc);
   mfa_session_read (cookie_jar, cookie_file, &gc);
-  const char * remote_address = print_openvpn_sockaddr (dest, &gc);
+  const char * remote_address = mfa_print_sockaddr (dest, &gc);
   struct status_output * file = status_open (cookie_file, 0, -1, NULL, STATUS_OUTPUT_WRITE);
   int i;
   bool write_current = false;
@@ -103,7 +114,7 @@ update_cookie_file (struct mfa_session_info *cookie, char * cookie_file, struct 
       /* Do not write cookie to file if it has expired. */
       if (tv_gt(&now, &tv))
         continue;
-      if (strcmp(current_cookie->remote_address, remote_address) == 0)
+      if (remote_address && strcmp(current_cookie->remote_address, remote_address) == 0)
         {
           CLEAR(current_cookie->token);
           CLEAR(current_cookie->timestamp);
@@ -116,7 +127,7 @@ update_cookie_file (struct mfa_session_info *cookie, char * cookie_file, struct 
                     current_cookie->token,
                     current_cookie->timestamp);
     }
-  if (!write_current)
+  if (!write_current && remote_address)
     {
       status_printf(file, "%s,%s,%s",
                     remote_address,
@@ -138,7 +149,7 @@ struct mfa_session_info * get_cookie (const struct openvpn_sockaddr *dest, struc
   int i;
   struct mfa_session_info *correct_cookie;
   ALLOC_OBJ_CLEAR_GC(correct_cookie, struct mfa_session_info, gc);
-  const char *addr = print_openvpn_sockaddr (dest, &local_gc);
+  const char *addr = mfa_print_sockaddr(dest, &local_gc);
   if (!addr)
     return NULL;
   for (i = 0; i < cookie_jar->len; i++)

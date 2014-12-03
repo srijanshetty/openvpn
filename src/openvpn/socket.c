@@ -1135,7 +1135,7 @@ socket_bind (socket_descriptor_t sd,
       const int errnum = openvpn_errno ();
       msg (M_FATAL, "%s: Socket bind failed on local address %s: %s",
 	   prefix,
-           print_sockaddr_ex (local->ai_addr, ":", PS_SHOW_PORT, &gc),
+           print_sockaddr_ex (local->ai_addr, ":", PS_SHOW_PORT, &gc, NULL),
            strerror_ts (errnum, &gc));
     }
   gc_free (&gc);
@@ -2026,7 +2026,7 @@ setenv_trusted (struct env_set *es, const struct link_socket_info *info)
 static void
 ipchange_fmt (const bool include_cmd, struct argv *argv, const struct link_socket_info *info, struct gc_arena *gc)
 {
-  const char *host = print_sockaddr_ex (&info->lsa->actual.dest.addr.sa, " ", PS_SHOW_PORT , gc);
+  const char *host = print_sockaddr_ex (&info->lsa->actual.dest.addr.sa, " ", PS_SHOW_PORT , gc, NULL);
   if (include_cmd)
     argv_printf (argv, "%sc %s",
 		 info->ipchange_command,
@@ -2100,11 +2100,11 @@ link_socket_bad_incoming_addr (struct buffer *buf,
 	   "TCP/UDP: Incoming packet rejected from %s[%d], expected peer address: %s (allow this incoming source address/port by removing --remote or adding --float)",
 	   print_link_socket_actual (from_addr, &gc),
 	   (int)from_addr->dest.addr.sa.sa_family,
-	   print_sockaddr_ex (info->lsa->remote_list->ai_addr,":" ,PS_SHOW_PORT, &gc));
+	   print_sockaddr_ex (info->lsa->remote_list->ai_addr,":" ,PS_SHOW_PORT, &gc, NULL));
           /* print additional remote addresses */
           for(ai=info->lsa->remote_list->ai_next;ai;ai=ai->ai_next) {
              msg(D_LINK_ERRORS,"or from peer address: %s",
-                 print_sockaddr_ex(ai->ai_addr,":",PS_SHOW_PORT, &gc));
+                 print_sockaddr_ex(ai->ai_addr,":",PS_SHOW_PORT, &gc, NULL));
           }
       break;
     }
@@ -2359,15 +2359,19 @@ const char *
 print_sockaddr_ex (const struct sockaddr *sa,
 				   const char* separator,
 				   const unsigned int flags,
-				   struct gc_arena *gc)
+				   struct gc_arena *gc,
+                                   bool *status)
 {
   struct buffer out = alloc_buf_gc (128, gc);
   bool addr_is_defined = false;
   char hostaddr[NI_MAXHOST] = "";
   char servname[NI_MAXSERV] = "";
-  int status;
+  int nameinfo_status;
 
+  if (status)
+    *status = true;
   socklen_t salen = 0;
+
   switch(sa->sa_family)
     {
     case AF_INET:
@@ -2381,16 +2385,20 @@ print_sockaddr_ex (const struct sockaddr *sa,
       addr_is_defined = !IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6*) sa)->sin6_addr);
       break;
     case AF_UNSPEC:
+      if (status)
+        *status = false;
       return "[AF_UNSPEC]";
     default:
       ASSERT(0);
     }
 
-  status = getnameinfo(sa, salen, hostaddr, sizeof (hostaddr),
+  nameinfo_status = getnameinfo(sa, salen, hostaddr, sizeof (hostaddr),
               servname, sizeof(servname), NI_NUMERICHOST | NI_NUMERICSERV);
 
-  if(status!=0) {
-      buf_printf(&out,"[nameinfo() err: %s]",gai_strerror(status));
+  if(nameinfo_status!=0) {
+      if (status)
+        *status = false;
+      buf_printf(&out,"[nameinfo() err: %s]",gai_strerror(nameinfo_status));
       return BSTR(&out);
   }
 
@@ -2399,7 +2407,11 @@ print_sockaddr_ex (const struct sockaddr *sa,
       if (addr_is_defined)
         buf_puts (&out, hostaddr);
       else
-        buf_puts (&out, "[undef]");
+        {
+          if (status)
+            *status = false;
+          buf_puts (&out, "[undef]");
+        }
     }
 
   if ((flags & PS_SHOW_PORT) || (flags & PS_SHOW_PORT_IF_DEFINED))
@@ -2433,7 +2445,7 @@ print_link_socket_actual_ex (const struct link_socket_actual *act,
     {
       char ifname[IF_NAMESIZE] = "[undef]";
       struct buffer out = alloc_buf_gc (128, gc);
-      buf_printf (&out, "%s", print_sockaddr_ex (&act->dest.addr.sa, separator, flags, gc));
+      buf_printf (&out, "%s", print_sockaddr_ex (&act->dest.addr.sa, separator, flags, gc, NULL));
 #if ENABLE_IP_PKTINFO
       if ((flags & PS_SHOW_PKTINFO) && addr_defined_ipi(act))
 	{
@@ -2454,7 +2466,7 @@ print_link_socket_actual_ex (const struct link_socket_actual *act,
 #error ENABLE_IP_PKTINFO is set without IP_PKTINFO xor IP_RECVDSTADDR (fix syshead.h)
 #endif
 		  buf_printf (&out, " (via %s%%%s)",
-			      print_sockaddr_ex (&sa.addr.sa, separator, 0, gc),
+			      print_sockaddr_ex (&sa.addr.sa, separator, 0, gc, NULL),
 			      ifname);
 		}
 	      break;

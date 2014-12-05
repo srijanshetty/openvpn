@@ -2756,6 +2756,11 @@ options_postprocess_filechecks (struct options *options)
   errs |= check_file_access (CHKACC_FILE|CHKACC_ACPTSTDIN,
                              options->auth_user_pass_file, R_OK,
                              "--auth-user-pass");
+#ifdef ENABLE_MFA
+  errs |= check_file_access (CHKACC_FILE|CHKACC_FILEXSTWR,
+                             options->mfa_session_file, R_OK|W_OK,
+                             "--mfa-session-file");
+#endif
 #endif /* P2MP */
 
   /* ** System related ** */

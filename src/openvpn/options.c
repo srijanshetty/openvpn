@@ -1212,6 +1212,20 @@ show_p2mp_parms (const struct options *o)
   SHOW_INT (max_routes_per_client);
   SHOW_STR (auth_user_pass_verify_script);
   SHOW_BOOL (auth_user_pass_verify_script_via_file);
+
+  SHOW_BOOL (mfa_methods_list.mfa_methods[MFA_TYPE_OTP].enabled);
+  SHOW_BOOL(mfa_methods_list.mfa_methods[MFA_TYPE_OTP].auth_mfa_verify_script_via_file);
+  SHOW_STR (mfa_methods_list.mfa_methods[MFA_TYPE_OTP].auth_script);
+  SHOW_BOOL (mfa_methods_list.mfa_methods[MFA_TYPE_PUSH].enabled);
+  SHOW_BOOL(mfa_methods_list.mfa_methods[MFA_TYPE_PUSH].auth_mfa_verify_script_via_file);
+  SHOW_STR (mfa_methods_list.mfa_methods[MFA_TYPE_PUSH].auth_script);
+  SHOW_BOOL (mfa_methods_list.mfa_methods[MFA_TYPE_USER_PASS].enabled);
+  SHOW_BOOL(mfa_methods_list.mfa_methods[MFA_TYPE_USER_PASS].auth_mfa_verify_script_via_file);
+  SHOW_STR (mfa_methods_list.mfa_methods[MFA_TYPE_USER_PASS].auth_script);
+  SHOW_BOOL (mfa_backward_compat);
+  SHOW_BOOL (mfa_session);
+  SHOW_STR (mfa_session_file);
+  SHOW_INT (mfa_session_expire);
 #if PORT_SHARE
   SHOW_STR (port_share_host);
   SHOW_STR (port_share_port);
@@ -6999,7 +7013,7 @@ add_option (struct options *options,
                 }
               set_user_script (options,
                       &options->mfa_methods_list.mfa_methods[mfa_type].auth_script,
-                      p[2], "auth-user-pass-verify", true);
+                      p[2], "mfa-method", true);
             }
           options->mfa_methods_list.len++;
         }

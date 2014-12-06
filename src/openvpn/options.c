@@ -1213,6 +1213,7 @@ show_p2mp_parms (const struct options *o)
   SHOW_STR (auth_user_pass_verify_script);
   SHOW_BOOL (auth_user_pass_verify_script_via_file);
 
+#ifdef ENABLE_MFA
   SHOW_BOOL (mfa_methods_list.mfa_methods[MFA_TYPE_OTP].enabled);
   SHOW_BOOL(mfa_methods_list.mfa_methods[MFA_TYPE_OTP].auth_mfa_verify_script_via_file);
   SHOW_STR (mfa_methods_list.mfa_methods[MFA_TYPE_OTP].auth_script);
@@ -1226,6 +1227,8 @@ show_p2mp_parms (const struct options *o)
   SHOW_BOOL (mfa_session);
   SHOW_STR (mfa_session_file);
   SHOW_INT (mfa_session_expire);
+#endif
+
 #if PORT_SHARE
   SHOW_STR (port_share_host);
   SHOW_STR (port_share_port);

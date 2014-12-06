@@ -3657,7 +3657,9 @@ inherit_context_child (struct context *dest,
   /* inherit SSL context */
   dest->c1.ks.ssl_ctx = src->c1.ks.ssl_ctx;
   dest->c1.ks.tls_auth_key = src->c1.ks.tls_auth_key;
+#ifdef ENABLE_MFA
   memcpy(dest->c1.cookie_key, src->c1.cookie_key, sizeof(src->c1.cookie_key));
+#endif
 #endif
 #endif
 

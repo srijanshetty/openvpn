@@ -427,6 +427,9 @@ ssl_set_auth_nocache (void)
 {
   passbuf.nocache = true;
   auth_user_pass.nocache = true;
+#ifdef ENABLE_MFA
+  auth_mfa.nocache = true;
+#endif
 }
 
 /*
